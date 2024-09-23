@@ -4,6 +4,9 @@
   "description": "Folder Mapper is a Visual Studio Code extension designed to generate a .txt file that captures the entire structure of your project, including directories and files, in a hierarchical tree format. This extension simplifies the process of documenting and visualizing complex project structures, providing developers with an easy-to-read snapshot of their project’s architecture. Whether you're sharing your project with others or organizing large codebases, Folder Mapper helps streamline project navigation and documentation.",
   "version": "1.0.3",
   "publisher": "m0n0t0ny",
+  "sponsor": {
+    "url": "https://ko-fi.com/antoniobertuccio"
+  },
   "engines": {
     "vscode": "^1.93.0"
   },
