@@ -6,11 +6,15 @@ Folder Mapper is a powerful Visual Studio Code extension that generates a compre
 
 ## Features
 
-✨ **Easy-to-Use Interface**: Select folders and start mapping with just a few clicks.
-📁 **Customizable Output**: Choose where to save your folder structure map.
-🚀 **Fast and Efficient**: Quickly generate maps for even large project structures.
-🎨 **Theme-Aware UI**: Automatically adapts to your VS Code theme for a seamless experience.
-📊 **Progress Visualization**: Watch the mapping progress in real-time.
+**✨ Easy-to-Use Interface**: Select folders and start mapping with just a few clicks.
+
+**📁 Customizable Output**: Choose where to save your folder structure map.
+
+**🚀 Fast and Efficient**: Quickly generate maps for even large project structures.
+
+**🎨 Theme-Aware UI**: Automatically adapts to your VS Code theme for a seamless experience.
+
+**📊 Progress Visualization**: Watch the mapping progress in real-time.
 
 ## How to Use
 
