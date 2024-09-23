@@ -1,6 +1,9 @@
 # Folder Mapper
 
-![Folder Mapper Icon](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-icon.png)
+<p>
+    <img src="[path_to_image](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/output-preview.png)" alt>
+    <em>.txt outcome of a mapped folder</em>
+</p>
 
 Folder Mapper is a powerful Visual Studio Code extension that generates a comprehensive map of your project's folder structure. It's the perfect tool for documentation, project overview, and sharing your project's architecture with team members.
 

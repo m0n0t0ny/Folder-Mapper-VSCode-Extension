@@ -2,6 +2,12 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.0.3] - 2024-09-20
+
+### Changed
+
+- Preview image of a .txt file showing the structure of a mapped folder.
+
 ## [1.0.2] - 2024-09-20
 
 ### Fixed
