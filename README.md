@@ -37,7 +37,7 @@ There are no known issues at this time. If you encounter any problems, please re
 
 ## Release Notes
 
-### 0.0.2
+### 1.0.2
 
 Initial release of Folder Mapper with core functionality:
 
@@ -54,6 +54,6 @@ We love your feedback! If you have any suggestions, questions, or just want to s
 
 ## License
 
-This extension is released under the [MIT License](LICENSE).
+This extension is released under the MIT License.
 
 **Enjoy mapping your folders with Folder Mapper!**
