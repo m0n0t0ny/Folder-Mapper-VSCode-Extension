@@ -46,7 +46,7 @@ async function selectOutputFolder() {
         canSelectFolders: true,
         canSelectMany: false,
         openLabel: "Select Output Folder",
-        defaultUri: vscode.Uri.file(outputFolder || getDefaultOutputFolder()),
+        defaultUri: vscode.Uri.file(outputFolder || getDefaultOutputFolder())
     });
     if (folderUri && folderUri.length > 0) {
         outputFolder = folderUri[0].fsPath;
@@ -62,7 +62,7 @@ async function selectFolder() {
         canSelectFolders: true,
         canSelectMany: false,
         openLabel: "Select Folder to Map",
-        defaultUri: projectRoot ? vscode.Uri.file(projectRoot) : undefined,
+        defaultUri: projectRoot ? vscode.Uri.file(projectRoot) : undefined
     });
     if (folderUri && folderUri.length > 0) {
         selectedFolder = folderUri[0];
@@ -165,13 +165,13 @@ function mapFolder() {
     const translations = {
         en: {
             folder_map_of: "Folder map of",
-            empty_folder_error: "The selected folder is empty.",
-        },
+            empty_folder_error: "The selected folder is empty."
+        }
     };
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: "Mapping folder structure",
-        cancellable: false,
+        cancellable: false
     }, async (progress) => {
         try {
             await generateFileHierarchy(folderToMap, outputFilePath, translations, "en", (progressPercent) => {

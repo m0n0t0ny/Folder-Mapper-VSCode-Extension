@@ -1,6 +1,6 @@
 # Folder Mapper
 
-![Folder Mapper Icon](images/folder-mapper-icon.png)
+![Folder Mapper Icon](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-icon.png)
 
 Folder Mapper is a powerful Visual Studio Code extension that generates a comprehensive map of your project's folder structure. It's the perfect tool for documentation, project overview, and sharing your project's architecture with team members.
 
@@ -21,6 +21,8 @@ Folder Mapper is a powerful Visual Studio Code extension that generates a compre
 5. Click "Start Mapping" to begin the process.
 6. Once complete, the generated map file will open automatically in VS Code.
 
+![Folder Mapper in Action](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-demo.gif)
+
 ## Requirements
 
 This extension requires Visual Studio Code version 1.93.0 or higher.
@@ -31,7 +33,7 @@ Folder Mapper works out of the box with no additional configuration required!
 
 ## Known Issues
 
-There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/yourusername/folder-mapper/issues).
+There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
 ## Release Notes
 
@@ -48,7 +50,7 @@ Initial release of Folder Mapper with core functionality:
 
 ## Feedback and Contributions
 
-We love your feedback! If you have any suggestions, questions, or just want to say hello, please [open an issue](https://github.com/yourusername/folder-mapper/issues) on our GitHub repository.
+We love your feedback! If you have any suggestions, questions, or just want to say hello, please [open an issue](https://github.com/m0n0t0ny/folder-mapper/issues) on our GitHub repository.
 
 ## License
 
