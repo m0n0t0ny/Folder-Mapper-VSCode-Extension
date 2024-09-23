@@ -1,7 +1,7 @@
 # Folder Mapper
 
 <p>
-    <img src="[path_to_image](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/output-preview.png)" alt>
+    <img src="https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/output-preview.png" alt>
     <em>.txt outcome of a mapped folder</em>
 </p>
 
