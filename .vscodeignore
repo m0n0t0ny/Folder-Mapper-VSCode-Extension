@@ -28,3 +28,4 @@ esbuild.js
 **/*.ts
 **/.vscode-test.*
 .github**
+GUIDA.md
