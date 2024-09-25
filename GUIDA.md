@@ -4,11 +4,9 @@
 
 2. Aggiorna README.md (specialmente la sezione Release Notes)
 
-3. Impacchetta l'estensione con il comando:
-   vsce package
+3. Impacchetta l'estensione con il comando: vsce package
 
-4. Pubblica l'estensione con il comando:
-   vsce publish
+4. Pubblica l'estensione con il comando: vsce publish
 
 ### Auto-increment the extension version
 

@@ -5,7 +5,7 @@
     <em>.txt outcome of a mapped folder</em>
 </p>
 
-Folder Mapper is a powerful Visual Studio Code extension that generates a comprehensive map of your project's folder structure. It's the perfect tool for documentation, project overview, and sharing your project's architecture with team members.
+Folder Mapper is a tool to generate snapshots of a folder structure. It's the perfect tool for providing AI agents with a project overview or sharing your project's architecture with team members.
 
 ## Features
 
