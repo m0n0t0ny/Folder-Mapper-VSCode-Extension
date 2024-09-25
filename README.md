@@ -1,7 +1,7 @@
 # Folder Mapper
 
 <p>
-    <img src="https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/output-preview.png" alt>
+    <img src="https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-extension-preview.png" alt>
     <em>.txt outcome of a mapped folder</em>
 </p>
 
@@ -17,7 +17,7 @@ Folder Mapper is a powerful Visual Studio Code extension that generates a compre
 
 **🎨 Theme-Aware UI**: Automatically adapts to your VS Code theme for a seamless experience.
 
-**📊 Progress Visualization**: Watch the mapping progress in real-time.
+**⏳ Progress Visualization**: Watch the mapping progress in real-time.
 
 ## How to Use
 
@@ -28,6 +28,7 @@ Folder Mapper is a powerful Visual Studio Code extension that generates a compre
 5. Click "Start Mapping" to begin the process.
 6. Once complete, the generated map file will open automatically in VS Code.
 
+Folder Mapper in action:
 ![Folder Mapper in Action](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-demo.gif)
 
 ## Requirements
@@ -44,14 +45,12 @@ There are no known issues at this time. If you encounter any problems, please re
 
 ## Release Notes
 
-### 1.0.2
+### [1.0.3] - 2024-09-23
 
-Initial release of Folder Mapper with core functionality:
+Added
 
-- Folder selection
-- Custom output folder
-- Progress visualization
-- Theme-aware UI
+- Preview image of a .txt file showing the structure of a mapped folder in the Marketplace.
+- Completely revamped the user interface for improved usability.
 
 ---
 

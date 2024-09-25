@@ -1,7 +1,39 @@
-out
-dist
-node_modules
+# Node modules
+node_modules/
+
+# Build output
+dist/
+out/
+
+# System files
+desktop.ini
+
+# VS Code settings
+.vscode/
+
+# VS Code test output
 .vscode-test/
+.vscode-test.mjs
+
+# Package files generated
 *.vsix
+
+# Log files
+*.log
+
+# npm-specific files
+package-lock.json
+
+# TypeScript output
+*.js
+*.js.map
+
+# Esbuild output
+esbuild.js
+
+# eslint specific config
+eslint.config.mjs
+
+# Additional files to ignore
 folder_structure.txt
 GUIDA.txt

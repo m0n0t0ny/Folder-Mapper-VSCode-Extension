@@ -1,14 +1,30 @@
-.vscode/**
+# Exclude configuration files
+.vscode/
 .vscode-test/**
+.vscode-test.mjs
+
+# Exclude node_modules unless needed
+node_modules/
+
+# Exclude test files
+test/
+
+# Exclude build files
+dist/
 out/**
-node_modules/**
-src/**
+
+# Exclude map files
+*.map
+
+# Exclude system files
+desktop.ini
+
+# Exclude unnecessary files for packaging
 .gitignore
 .yarnrc
 esbuild.js
-vsc-extension-quickstart.md
 **/tsconfig.json
 **/eslint.config.mjs
-**/*.map
 **/*.ts
 **/.vscode-test.*
+.github**
