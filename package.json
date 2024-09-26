@@ -1,8 +1,8 @@
 {
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
-  "description": "Folder Mapper is a Visual Studio Code extension designed to generate a .txt file that captures the entire structure of your project, including directories and files, in a hierarchical tree format. This extension simplifies the process of documenting and visualizing complex project structures, providing developers with an easy-to-read snapshot of their project’s architecture. Whether you're sharing your project with others or organizing large codebases, Folder Mapper helps streamline project navigation and documentation.",
-  "version": "1.0.3",
+  "description": "Generate a hierarchical tree structure of your project folders and files.",
+  "version": "1.1.2",
   "publisher": "m0n0t0ny",
   "sponsor": {
     "url": "https://ko-fi.com/antoniobertuccio"
@@ -43,16 +43,16 @@
         {
           "id": "folderMapper-viewContainer",
           "title": "Folder Mapper",
-          "icon": "images/folder-mapper-icon.svg"
+          "icon": "media/folder-mapper-icon.svg"
         }
       ]
     },
     "views": {
       "folderMapper-viewContainer": [
         {
+          "type": "webview",
           "id": "folderMapper-view",
-          "name": "Folder Structure",
-          "type": "webview"
+          "name": "Folder Mapper"
         }
       ]
     },
@@ -72,26 +72,7 @@
         "title": "Select Output Folder",
         "category": "Folder Mapper"
       }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "folderMapper.selectFolder",
-          "when": "view == folderMapper-view",
-          "group": "navigation"
-        },
-        {
-          "command": "folderMapper.mapFolder",
-          "when": "view == folderMapper-view",
-          "group": "navigation"
-        },
-        {
-          "command": "folderMapper.selectOutputFolder",
-          "when": "view == folderMapper-view",
-          "group": "navigation"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

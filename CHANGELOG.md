@@ -2,6 +2,21 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.1.0] - 2024-09-26
+
+### Added
+
+- Depth limit feature: Users can now specify a maximum depth for folder mapping
+
+### Changed
+
+- Improved UI layout for better user experience
+
+### Fixed
+
+- Fixed issues with progress bar getting stuck or not updating properly
+- Improved error handling and messaging
+
 ## [1.0.3] - 2024-09-20
 
 ### Changed
