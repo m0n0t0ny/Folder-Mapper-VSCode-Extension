@@ -2,6 +2,12 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.1.1] - 2024-09-26
+
+### Fixed
+
+- Restored the activity bar icon for Folder Mapper
+
 ## [1.1.0] - 2024-09-26
 
 ### Added
