@@ -67,6 +67,7 @@ async function generateFileHierarchy(
   outputFile: string,
   translations: any,
   lang: string,
+  depthLimit: number,
   progressCallback?: (progress: number) => void
 ) {
   try {
@@ -80,10 +81,18 @@ async function generateFileHierarchy(
     output.write(`${translations[lang]["folder_map_of"]} ${startPath}\n`);
     output.write("=" + "=".repeat(49) + "\n\n");
 
-    const totalItems = countItems(startPath);
+    const totalItems = countItems(startPath, depthLimit);
     let processedItems = 0;
 
-    function writeHierarchy(currentPath: string, prefix: string = "") {
+    function writeHierarchy(
+      currentPath: string,
+      prefix: string = "",
+      currentDepth: number = 0
+    ) {
+      if (depthLimit !== 0 && currentDepth >= depthLimit) {
+        return;
+      }
+
       let items: string[];
       try {
         items = fs.readdirSync(currentPath);
@@ -125,21 +134,29 @@ async function generateFileHierarchy(
         processedItems++;
 
         if (progressCallback) {
-          progressCallback((processedItems / totalItems) * 100);
+          // Assicuriamoci che il progresso non superi mai il 99% fino al completamento
+          const progress = Math.min((processedItems / totalItems) * 100, 99);
+          progressCallback(progress);
         }
 
-        if (isDirectory) {
-          writeHierarchy(fullPath, newPrefix);
+        if (
+          isDirectory &&
+          (depthLimit === 0 || currentDepth < depthLimit - 1)
+        ) {
+          writeHierarchy(fullPath, newPrefix, currentDepth + 1);
         }
       });
     }
 
     writeHierarchy(startPath);
     output.end();
+
+    // Segnala il 100% di completamento dopo aver finito la scrittura
+    if (progressCallback) {
+      progressCallback(100);
+    }
   } catch (e) {
-    if (e instanceof EmptyFolderError) {
-      vscode.window.showErrorMessage(e.message);
-    } else if (e instanceof Error) {
+    if (e instanceof Error) {
       vscode.window.showErrorMessage(`Error generating map: ${e.message}`);
       console.error(
         `Detailed Error: ${JSON.stringify(e, Object.getOwnPropertyNames(e))}`
@@ -150,21 +167,30 @@ async function generateFileHierarchy(
   }
 }
 
-function countItems(dir: string): number {
-  let count = 0;
+function countItems(
+  dir: string,
+  depthLimit: number,
+  currentDepth: number = 0
+): number {
+  if (depthLimit !== 0 && currentDepth >= depthLimit) {
+    return 1; // Conta la directory corrente ma non andare oltre
+  }
+
+  let count = 1; // Conta la directory corrente
   const items = fs.readdirSync(dir);
-  count += items.length;
   for (const item of items) {
     const fullPath = path.join(dir, item);
     if (fs.statSync(fullPath).isDirectory()) {
-      count += countItems(fullPath);
+      count += countItems(fullPath, depthLimit, currentDepth + 1);
+    } else {
+      count++;
     }
   }
   return count;
 }
 
 // Funzione per mappare la struttura della cartella
-function mapFolder() {
+function mapFolder(depth: number = 0) {
   if (!selectedFolder) {
     vscode.window.showErrorMessage(
       "No folder selected. Please select a folder first."
@@ -172,8 +198,16 @@ function mapFolder() {
     return;
   }
 
+  if (!outputFolder) {
+    vscode.window.showErrorMessage(
+      "No output folder selected. Please select an output folder first."
+    );
+    return;
+  }
+
   const folderToMap = selectedFolder.fsPath;
-  const outputFilePath = path.join(folderToMap, "folder_structure.txt");
+  const outputFileName = "folder_structure.txt";
+  const outputFilePath = path.join(outputFolder, outputFileName);
 
   const translations = {
     en: {
@@ -182,6 +216,8 @@ function mapFolder() {
     }
   };
 
+  provider.resetProgress(); // Reset progress bar before starting new mapping
+
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -189,17 +225,22 @@ function mapFolder() {
       cancellable: false
     },
     async (progress) => {
+      let currentProgress = 0;
       try {
         await generateFileHierarchy(
           folderToMap,
           outputFilePath,
           translations,
           "en",
+          depth,
           (progressPercent) => {
-            progress.report({ increment: progressPercent });
+            const increment = progressPercent - currentProgress;
+            progress.report({ increment });
+            currentProgress = progressPercent;
             provider.updateProgress(progressPercent);
           }
         );
+        provider.updateProgress(100); // Ensure progress reaches 100%
         vscode.window.showInformationMessage(
           `Folder structure mapped successfully. Output file: ${outputFilePath}`
         );
@@ -207,6 +248,7 @@ function mapFolder() {
           vscode.window.showTextDocument(doc);
         });
       } catch (error) {
+        provider.resetProgress(); // Reset progress in case of error
         if (error instanceof Error) {
           vscode.window.showErrorMessage(
             `Error mapping folder: ${error.message}`
@@ -258,7 +300,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   let mapFolderDisposable = vscode.commands.registerCommand(
     "folderMapper.mapFolder",
-    mapFolder
+    (depth: number = 0) => mapFolder(depth)
   );
   let selectOutputFolderDisposable = vscode.commands.registerCommand(
     "folderMapper.selectOutputFolder",
