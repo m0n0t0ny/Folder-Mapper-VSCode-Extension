@@ -21,12 +21,11 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 
 ## How to Use
 
-1. Install the Folder Mapper extension from the VS Code Marketplace.
-2. Open the Folder Mapper view in the Activity Bar.
-3. Click "Select Folder to Map" and choose the folder you want to map.
-4. (Optional) Click "Select Output Folder" to choose where to save the map file.
-5. Click "Start Mapping" to begin the process.
-6. Once complete, the generated map file will open automatically in VS Code.
+1. Open the Folder Mapper sidebar in VS Code.
+2. Click "Select Folder to Map" to choose the folder you want to map.
+3. (Optional) Click "Select Output Folder" to choose where to save the map file.
+4. Set the "Depth Limit" if you want to restrict the mapping depth (0 for unlimited).
+5. Click "Start Mapping" to generate the folder structure map.
 
 Folder Mapper in action:
 ![Folder Mapper in Action](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-demo.gif)
@@ -43,23 +42,17 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## Release Notes
+## What's New in 1.1.0
 
-### [1.0.3] - 2024-09-23
-
-Added
-
-- Preview image of a .txt file showing the structure of a mapped folder in the Marketplace.
-- Completely revamped the user interface for improved usability.
-
----
+- **Depth Limit Feature**: You can now specify how deep you want the mapper to go into your folder structure.
+- **Improved Progress Tracking**: A progress bar now shows you the real-time status of the mapping process.
+- **UI Enhancements**: We've made the interface slightly more intuitive and visually appealing.
+- **Bug Fixes**: Several issues with progress tracking and UI updates have been resolved.
 
 ## Feedback and Contributions
 
-We love your feedback! If you have any suggestions, questions, or just want to say hello, please [open an issue](https://github.com/m0n0t0ny/folder-mapper/issues) on our GitHub repository.
+We welcome your feedback and contributions! Please feel free to submit issues or pull requests on our [GitHub repository](https://github.com/m0n0t0ny/Folder-Mapper-VSCode-Extension).
 
 ## License
 
 This extension is released under the MIT License.
-
-**Enjoy mapping your folders with Folder Mapper!**

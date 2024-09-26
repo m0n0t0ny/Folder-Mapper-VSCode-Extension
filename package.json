@@ -1,8 +1,8 @@
 {
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
-  "description": "Generate a .txt file that captures the entire structure of a directory, in a hierarchical tree format. This extension simplifies the process of visualizing complex project structures, providing developers and AI agents with an easy-to-read snapshot of your project’s architecture.",
-  "version": "1.0.3",
+  "description": "Generate a hierarchical tree structure of your project folders and files.",
+  "version": "1.1.0",
   "publisher": "m0n0t0ny",
   "license": "MIT",
   "sponsor": {
@@ -42,16 +42,16 @@
         {
           "id": "folderMapper-viewContainer",
           "title": "Folder Mapper",
-          "icon": "images/folder-mapper-icon.svg"
+          "icon": "media/folder-mapper-icon.svg"
         }
       ]
     },
     "views": {
       "folderMapper-viewContainer": [
         {
+          "type": "webview",
           "id": "folderMapper-view",
-          "name": "Folder Structure",
-          "type": "webview"
+          "name": "Folder Mapper"
         }
       ]
     },
@@ -71,26 +71,7 @@
         "title": "Select Output Folder",
         "category": "Folder Mapper"
       }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "folderMapper.selectFolder",
-          "when": "view == folderMapper-view",
-          "group": "navigation"
-        },
-        {
-          "command": "folderMapper.mapFolder",
-          "when": "view == folderMapper-view",
-          "group": "navigation"
-        },
-        {
-          "command": "folderMapper.selectOutputFolder",
-          "when": "view == folderMapper-view",
-          "group": "navigation"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
