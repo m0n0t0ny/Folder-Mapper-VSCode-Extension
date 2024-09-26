@@ -36,7 +36,7 @@ class FolderMapperViewProvider {
         this._view = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this._extensionUri],
+            localResourceRoots: [this._extensionUri]
         };
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         webviewView.webview.onDidReceiveMessage(async (data) => {
@@ -48,7 +48,8 @@ class FolderMapperViewProvider {
                     vscode.commands.executeCommand("folderMapper.selectOutputFolder");
                     break;
                 case "mapFolder":
-                    vscode.commands.executeCommand("folderMapper.mapFolder");
+                    this.resetProgress();
+                    vscode.commands.executeCommand("folderMapper.mapFolder", data.depth);
                     break;
             }
         });
@@ -58,7 +59,7 @@ class FolderMapperViewProvider {
             this._view.webview.postMessage({
                 type: "updateFolders",
                 selectedFolder: selectedFolder || "Not selected",
-                outputFolder: outputFolder || "%USERPROFILE%",
+                outputFolder: outputFolder || "Not selected"
             });
         }
     }
@@ -66,7 +67,14 @@ class FolderMapperViewProvider {
         if (this._view) {
             this._view.webview.postMessage({
                 type: "updateProgress",
-                progress: progress,
+                progress: progress
+            });
+        }
+    }
+    resetProgress() {
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: "resetProgress"
             });
         }
     }
@@ -80,23 +88,27 @@ class FolderMapperViewProvider {
                 <title>Folder Mapper</title>
                 <style>
                     body { 
-                        padding: 10px; 
+                        padding: 20px; 
                         color: var(--vscode-foreground);
                         font-family: var(--vscode-font-family);
                         font-size: var(--vscode-font-size);
                         font-weight: var(--vscode-font-weight);
                     }
-                    button { 
+                    button, input { 
                         width: 100%; 
                         margin-bottom: 10px; 
-                        background-color: var(--vscode-button-background);
-                        color: var(--vscode-button-foreground);
-                        border: 1px solid var(--vscode-button-border);
+                        background-color: var(--vscode-input-background);
+                        color: var(--vscode-input-foreground);
+                        border: 1px solid var(--vscode-input-border);
                         border-radius: 2px;
                         padding: 6px 14px;
                         font-family: var(--vscode-font-family);
                         font-size: var(--vscode-font-size);
                         font-weight: var(--vscode-font-weight);
+                    }
+                    button {
+                        background-color: var(--vscode-button-background);
+                        color: var(--vscode-button-foreground);
                         cursor: pointer;
                     }
                     button:hover {
@@ -108,6 +120,7 @@ class FolderMapperViewProvider {
                         background-color: var(--vscode-input-background);
                         color: var(--vscode-input-foreground);
                         border: 1px solid var(--vscode-input-border);
+                        border-radius: 2px;
                     }
                     #progressBar {
                         width: 100%;
@@ -115,12 +128,32 @@ class FolderMapperViewProvider {
                         background-color: var(--vscode-input-background);
                         margin-top: 10px;
                         display: none;
+                        border-radius: 2px;
                     }
                     #progressBar .progress {
                         height: 100%;
                         background-color: var(--vscode-progressBar-background);
                         width: 0%;
                         transition: width 0.3s ease-in-out;
+                        border-radius: 2px;
+                    }
+                    label {
+                        display: block;
+                        margin-bottom: 5px;
+                    }
+                    .input-group {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 10px;
+                    }
+                    .input-group label {
+                        flex: 0 0 auto;
+                        margin-right: 10px;
+                        margin-bottom: 0;
+                    }
+                    .input-group input {
+                        flex: 1 1 auto;
+                        margin-bottom: 0;
                     }
                 </style>
             </head>
@@ -128,7 +161,11 @@ class FolderMapperViewProvider {
                 <button id="selectFolder">Select Folder to Map</button>
                 <div id="selectedFolder">Selected folder to map: Not selected</div>
                 <button id="selectOutputFolder">Select Output Folder</button>
-                <div id="outputFolder">Selected folder to save folder map: %USERPROFILE%</div>
+                <div id="outputFolder">Selected folder to save folder map: Not selected</div>
+                <div class="input-group">
+                    <label for="depthLimit">Depth Limit (0 for unlimited):</label>
+                    <input type="number" id="depthLimit" value="0" min="0">
+                </div>
                 <button id="startMapping">Start Mapping</button>
                 <div id="progressBar"><div class="progress"></div></div>
 
@@ -141,8 +178,8 @@ class FolderMapperViewProvider {
                         vscode.postMessage({ type: 'selectOutputFolder' });
                     });
                     document.getElementById('startMapping').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'mapFolder' });
-                        document.getElementById('progressBar').style.display = 'block';
+                        const depth = parseInt(document.getElementById('depthLimit').value);
+                        vscode.postMessage({ type: 'mapFolder', depth: depth });
                     });
                     window.addEventListener('message', event => {
                         const message = event.data;
@@ -154,11 +191,17 @@ class FolderMapperViewProvider {
                             case 'updateProgress':
                                 const progressBar = document.querySelector('#progressBar .progress');
                                 progressBar.style.width = \`\${message.progress}%\`;
+                                document.getElementById('progressBar').style.display = 'block';
                                 if (message.progress >= 100) {
                                     setTimeout(() => {
                                         document.getElementById('progressBar').style.display = 'none';
                                     }, 1000);
                                 }
+                                break;
+                            case 'resetProgress':
+                                const progressBarReset = document.querySelector('#progressBar .progress');
+                                progressBarReset.style.width = '0%';
+                                document.getElementById('progressBar').style.display = 'none';
                                 break;
                         }
                     });
