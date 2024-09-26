@@ -4,6 +4,7 @@
   "description": "Generate a .txt file that captures the entire structure of a directory, in a hierarchical tree format. This extension simplifies the process of visualizing complex project structures, providing developers and AI agents with an easy-to-read snapshot of your project’s architecture.",
   "version": "1.0.3",
   "publisher": "m0n0t0ny",
+  "license": "MIT",
   "sponsor": {
     "url": "https://ko-fi.com/antoniobertuccio"
   },
