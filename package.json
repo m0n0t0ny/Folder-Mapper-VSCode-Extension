@@ -32,9 +32,6 @@
     "color": "#dfdfdf",
     "theme": "light"
   },
-  "activationEvents": [
-    "onView:folderMapper-view"
-  ],
   "main": "./extension.js",
   "contributes": {
     "viewsContainers": {
