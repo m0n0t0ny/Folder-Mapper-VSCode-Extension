@@ -36,4 +36,5 @@ eslint.config.mjs
 
 # Additional files to ignore
 folder_structure.txt
-./GUIDA.md
+GUIDA.md
+TODO
