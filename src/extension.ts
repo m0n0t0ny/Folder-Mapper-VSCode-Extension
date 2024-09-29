@@ -436,13 +436,9 @@ logs/**
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "folder-mapper" is now active!');
 
-  provider = new FolderMapperViewProvider(context.extensionUri);
-
+  const provider = new FolderMapperViewProvider(context.extensionUri);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      FolderMapperViewProvider.viewType,
-      provider
-    )
+    vscode.window.registerWebviewViewProvider(FolderMapperViewProvider.viewType, provider)
   );
 
   outputFolder = getDefaultOutputFolder();
