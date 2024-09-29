@@ -2,6 +2,19 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.2.0] - 2024-09-29
+
+### Added
+
+- Support for .foldermapperignore file to exclude specific files or directories from mapping
+- Automatic creation of a default .foldermapperignore file with commented examples
+- New dependency: 'ignore' package for handling exclusion patterns
+
+### Changed
+
+- Updated folder mapping logic to respect .foldermapperignore rules
+- Improved documentation to explain the usage of .foldermapperignore
+
 ## [1.1.1] - 2024-09-26
 
 ### Fixed
