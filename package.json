@@ -32,17 +32,14 @@
     "color": "#dfdfdf",
     "theme": "light"
   },
-  "activationEvents": [
-    "onView:folderMapper-view"
-  ],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
           "id": "folderMapper-viewContainer",
           "title": "Folder Mapper",
-          "icon": "images/folder-mapper-icon.svg"
+          "icon": "./images/folder-mapper-icon.svg"
         }
       ]
     },
@@ -70,6 +67,16 @@
         "command": "folderMapper.selectOutputFolder",
         "title": "Select Output Folder",
         "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.selectIgnoreFile",
+        "title": "Select Ignore File",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.createDefaultIgnoreFile",
+        "title": "Create Default Ignore File",
+        "category": "Folder Mapper"
       }
     ]
   },
@@ -93,5 +100,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/m0n0t0ny/folder-mapper.git"
+  },
+  "dependencies": {
+    "ignore": "^6.0.2"
   }
 }
