@@ -3,15 +3,21 @@ import * as vscode from "vscode";
 export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "folderMapper-view";
   private _view?: vscode.WebviewView;
+  private _ready: Promise<void>;
+  private _resolveReady!: () => void;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _extensionUri: vscode.Uri) {
+    this._ready = new Promise((resolve) => {
+      this._resolveReady = resolve;
+    });
+  }
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri]
+      localResourceRoots: [this._extensionUri],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -33,32 +39,41 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           break;
       }
     });
+
+    this._resolveReady();
   }
 
-  public updateView(selectedFolder?: string, outputFolder?: string, ignoreFile?: string) {
+  public async updateView(
+    selectedFolder?: string,
+    outputFolder?: string,
+    ignoreFile?: string
+  ) {
+    await this._ready;
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateFolders",
         selectedFolder: selectedFolder || "Not selected",
         outputFolder: outputFolder || "Not selected",
-        ignoreFile: ignoreFile || "Not selected"
+        ignoreFile: ignoreFile || "Not selected",
       });
     }
   }
 
-  public updateProgress(progress: number) {
+  public async updateProgress(progress: number) {
+    await this._ready;
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateProgress",
-        progress: progress
+        progress: progress,
       });
     }
   }
 
-  public resetProgress() {
+  public async resetProgress() {
+    await this._ready;
     if (this._view) {
       this._view.webview.postMessage({
-        type: "resetProgress"
+        type: "resetProgress",
       });
     }
   }

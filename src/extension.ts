@@ -13,12 +13,17 @@ let provider: FolderMapperViewProvider;
 
 class EmptyFolderError extends Error {}
 
-function updateUI() {
-  provider.updateView(
-    selectedFolder?.fsPath || "Not selected",
-    outputFolder || getDefaultOutputFolder(),
-    ignoreFilePath || "Not selected"
-  );
+async function updateUI() {
+  if (provider) {
+    await provider.updateView(
+      selectedFolder?.fsPath || "Not selected",
+      outputFolder || getDefaultOutputFolder(),
+      ignoreFilePath || "Not selected"
+    );
+    console.log("UI updated");
+  } else {
+    console.log("Provider not initialized, skipping UI update");
+  }
 }
 
 // Funzione per ottenere la cartella home dell'utente
@@ -447,56 +452,69 @@ logs/**
 }
 
 // Funzione di attivazione dell'estensione
-export function activate(context: vscode.ExtensionContext) {
-  console.log('Congratulations, your extension "folder-mapper" is now active!');
+export async function activate(context: vscode.ExtensionContext) {
+  console.log("Activating Folder Mapper extension");
 
-  const provider = new FolderMapperViewProvider(context.extensionUri);
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      FolderMapperViewProvider.viewType,
-      provider
-    )
-  );
+  try {
+    provider = new FolderMapperViewProvider(context.extensionUri);
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(
+        FolderMapperViewProvider.viewType,
+        provider
+      )
+    );
 
-  outputFolder = getDefaultOutputFolder();
+    outputFolder = getDefaultOutputFolder();
 
-  statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100
-  );
-  context.subscriptions.push(statusBarItem);
+    statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      100
+    );
+    context.subscriptions.push(statusBarItem);
 
-  let selectIgnoreFileDisposable = vscode.commands.registerCommand(
-    "folderMapper.selectIgnoreFile",
-    selectIgnoreFile
-  );
-  let selectFolderDisposable = vscode.commands.registerCommand(
-    "folderMapper.selectFolder",
-    selectFolder
-  );
-  let mapFolderDisposable = vscode.commands.registerCommand(
-    "folderMapper.mapFolder",
-    (depth: number = 0) => mapFolder(depth)
-  );
-  let selectOutputFolderDisposable = vscode.commands.registerCommand(
-    "folderMapper.selectOutputFolder",
-    selectOutputFolder
-  );
-  let createDefaultIgnoreFileDisposable = vscode.commands.registerCommand(
-    "folderMapper.createDefaultIgnoreFile",
-    createDefaultIgnoreFile
-  );
+    // Register commands
+    let selectIgnoreFileDisposable = vscode.commands.registerCommand(
+      "folderMapper.selectIgnoreFile",
+      selectIgnoreFile
+    );
+    let selectFolderDisposable = vscode.commands.registerCommand(
+      "folderMapper.selectFolder",
+      selectFolder
+    );
+    let mapFolderDisposable = vscode.commands.registerCommand(
+      "folderMapper.mapFolder",
+      (depth: number = 0) => mapFolder(depth)
+    );
+    let selectOutputFolderDisposable = vscode.commands.registerCommand(
+      "folderMapper.selectOutputFolder",
+      selectOutputFolder
+    );
+    let createDefaultIgnoreFileDisposable = vscode.commands.registerCommand(
+      "folderMapper.createDefaultIgnoreFile",
+      createDefaultIgnoreFile
+    );
 
-  context.subscriptions.push(
-    selectFolderDisposable,
-    mapFolderDisposable,
-    selectOutputFolderDisposable,
-    selectIgnoreFileDisposable,
-    createDefaultIgnoreFileDisposable
-  );
+    context.subscriptions.push(
+      selectFolderDisposable,
+      mapFolderDisposable,
+      selectOutputFolderDisposable,
+      createDefaultIgnoreFileDisposable,
+      selectIgnoreFileDisposable
+    );
 
-  updateStatusBar();
-  updateUI();
+    console.log("Commands registered");
+
+    updateStatusBar();
+    // Delay the initial UI update to ensure the webview is ready
+    setTimeout(() => updateUI(), 1000);
+
+    console.log("Folder Mapper extension activated successfully");
+  } catch (error) {
+    console.error("Error activating Folder Mapper extension:", error);
+    vscode.window.showErrorMessage(
+      `Failed to activate Folder Mapper: ${error}`
+    );
+  }
 }
 
 // Funzione di disattivazione dell'estensione
