@@ -2,7 +2,7 @@
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
   "description": "Generate a hierarchical tree structure of your project folders and files.",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "publisher": "m0n0t0ny",
   "license": "MIT",
   "sponsor": {
@@ -39,7 +39,7 @@
         {
           "id": "folderMapper-viewContainer",
           "title": "Folder Mapper",
-          "icon": "images/folder-mapper-icon.svg"
+          "icon": "./images/folder-mapper-icon.svg"
         }
       ]
     },
@@ -79,8 +79,8 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.93.0",
     "@types/node": "20.x",
+    "@types/vscode": "^1.93.0",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",
     "eslint": "^9.11.0",
@@ -89,5 +89,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/m0n0t0ny/folder-mapper.git"
+  },
+  "dependencies": {
+    "ignore": "^6.0.2"
   }
 }
