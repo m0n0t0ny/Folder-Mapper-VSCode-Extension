@@ -47,6 +47,9 @@ class FolderMapperViewProvider {
                 case "selectOutputFolder":
                     vscode.commands.executeCommand("folderMapper.selectOutputFolder");
                     break;
+                case "selectIgnoreFile":
+                    vscode.commands.executeCommand("folderMapper.selectIgnoreFile");
+                    break;
                 case "mapFolder":
                     this.resetProgress();
                     vscode.commands.executeCommand("folderMapper.mapFolder", data.depth);
@@ -54,12 +57,13 @@ class FolderMapperViewProvider {
             }
         });
     }
-    updateView(selectedFolder, outputFolder) {
+    updateView(selectedFolder, outputFolder, ignoreFile) {
         if (this._view) {
             this._view.webview.postMessage({
                 type: "updateFolders",
                 selectedFolder: selectedFolder || "Not selected",
-                outputFolder: outputFolder || "Not selected"
+                outputFolder: outputFolder || "Not selected",
+                ignoreFile: ignoreFile || "Not selected"
             });
         }
     }
@@ -114,7 +118,7 @@ class FolderMapperViewProvider {
                     button:hover {
                         background-color: var(--vscode-button-hoverBackground);
                     }
-                    #selectedFolder, #outputFolder {
+                    #selectedFolder, #outputFolder, #ignoreFile {
                         margin-bottom: 10px;
                         padding: 5px;
                         background-color: var(--vscode-input-background);
@@ -162,6 +166,9 @@ class FolderMapperViewProvider {
                 <div id="selectedFolder">Selected folder to map: Not selected</div>
                 <button id="selectOutputFolder">Select Output Folder</button>
                 <div id="outputFolder">Selected folder to save folder map: Not selected</div>
+                <button id="createDefaultIgnoreFile">Create Default .foldermapperignore</button>
+                <button id="selectIgnoreFile">Select .foldermapperignore File</button>
+                <div id="ignoreFile">Selected .foldermapperignore file: Not selected</div>
                 <div class="input-group">
                     <label for="depthLimit">Depth Limit (0 for unlimited):</label>
                     <input type="number" id="depthLimit" value="0" min="0">
@@ -177,6 +184,12 @@ class FolderMapperViewProvider {
                     document.getElementById('selectOutputFolder').addEventListener('click', () => {
                         vscode.postMessage({ type: 'selectOutputFolder' });
                     });
+                    document.getElementById('selectIgnoreFile').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'selectIgnoreFile' });
+                    });
+                    document.getElementById('createDefaultIgnoreFile').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'createDefaultIgnoreFile' });
+                    });
                     document.getElementById('startMapping').addEventListener('click', () => {
                         const depth = parseInt(document.getElementById('depthLimit').value);
                         vscode.postMessage({ type: 'mapFolder', depth: depth });
@@ -187,6 +200,7 @@ class FolderMapperViewProvider {
                             case 'updateFolders':
                                 document.getElementById('selectedFolder').textContent = \`Selected folder to map: \${message.selectedFolder}\`;
                                 document.getElementById('outputFolder').textContent = \`Selected folder to save folder map: \${message.outputFolder}\`;
+                                document.getElementById('ignoreFile').textContent = \`Selected .foldermapperignore file: \${message.ignoreFile}\`;
                                 break;
                             case 'updateProgress':
                                 const progressBar = document.querySelector('#progressBar .progress');
