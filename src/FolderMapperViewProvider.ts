@@ -149,6 +149,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 <div id="outputFolder">Selected folder to save folder map: Not selected</div>
                 <button id="selectIgnoreFile">Select .foldermapperignore File</button>
                 <div id="ignoreFile">Selected .foldermapperignore file: Not selected</div>
+                <button id="createDefaultIgnoreFile">Create Default .foldermapperignore</button>
                 <div class="input-group">
                     <label for="depthLimit">Depth Limit (0 for unlimited):</label>
                     <input type="number" id="depthLimit" value="0" min="0">
@@ -166,6 +167,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     });
                     document.getElementById('selectIgnoreFile').addEventListener('click', () => {
                         vscode.postMessage({ type: 'selectIgnoreFile' });
+                    });
+                    document.getElementById('createDefaultIgnoreFile').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'createDefaultIgnoreFile' });
                     });
                     document.getElementById('startMapping').addEventListener('click', () => {
                         const depth = parseInt(document.getElementById('depthLimit').value);

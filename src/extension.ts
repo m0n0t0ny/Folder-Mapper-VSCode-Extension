@@ -305,10 +305,27 @@ async function selectIgnoreFile() {
 }
 
 // Funzione che crea un file .foldermapperignore di default
-function createDefaultIgnoreFile(folderPath: string) {
-  const ignorePath = path.join(folderPath, '.foldermapperignore');
-  if (!fs.existsSync(ignorePath)) {
-    const defaultContent = `# .foldermapperignore: Configuration file for excluding files and directories from Folder Mapper
+function createDefaultIgnoreFile() {
+  if (!selectedFolder) {
+    vscode.window.showErrorMessage("No folder selected. Please select a folder first.");
+    return;
+  }
+
+  const ignorePath = path.join(selectedFolder.fsPath, '.foldermapperignore');
+  if (fs.existsSync(ignorePath)) {
+    vscode.window.showWarningMessage('.foldermapperignore already exists. Do you want to overwrite it?', 'Yes', 'No')
+      .then(selection => {
+        if (selection === 'Yes') {
+          writeDefaultIgnoreFile(ignorePath);
+        }
+      });
+  } else {
+    writeDefaultIgnoreFile(ignorePath);
+  }
+}
+
+function writeDefaultIgnoreFile(filePath: string) {
+  const defaultContent = `# .foldermapperignore: Configuration file for excluding files and directories from Folder Mapper
 
 # HOW TO USE THIS FILE:
 # 1. Lines starting with '#' are comments and are ignored by Folder Mapper.
@@ -326,7 +343,7 @@ function createDefaultIgnoreFile(folderPath: string) {
 # Exclude a specific file
 example.txt
 
-# Exclude a specific directory and all its contents
+# Exclude a specific directory and all its contents (directory won't appear in the map)
 node_modules/
 
 # Exclude all files with a specific extension
@@ -338,8 +355,8 @@ temp_*
 # Exclude all files that end with a specific suffix
 *_old
 
-# Exclude all files inside a directory, but not the directory itself
-directory/*
+# Exclude all files inside a directory, but keep the directory itself in the map (directory will appear empty)
+src/*
 
 # Exclude all files of a specific type in any subdirectory
 **/*.tmp
@@ -408,9 +425,11 @@ logs/**
 # Remember: The more specific your rules, the better control you have over what gets excluded.
 # You can always check the generated map to ensure the exclusions are working as expected.
 `;
-    fs.writeFileSync(ignorePath, defaultContent);
-    vscode.window.showInformationMessage('Created default .foldermapperignore file');
-  }
+
+  fs.writeFileSync(filePath, defaultContent);
+  vscode.window.showInformationMessage('Default .foldermapperignore file created successfully.');
+  ignoreFilePath = filePath;
+  updateUI();
 }
 
 // Funzione di attivazione dell'estensione
@@ -450,12 +469,17 @@ export function activate(context: vscode.ExtensionContext) {
     "folderMapper.selectOutputFolder",
     selectOutputFolder
   );
+  let createDefaultIgnoreFileDisposable = vscode.commands.registerCommand(
+    "folderMapper.createDefaultIgnoreFile",
+    createDefaultIgnoreFile
+  );
 
   context.subscriptions.push(
     selectFolderDisposable,
     mapFolderDisposable,
     selectOutputFolderDisposable,
-    selectIgnoreFileDisposable
+    selectIgnoreFileDisposable,
+    createDefaultIgnoreFileDisposable
   );
 
   updateStatusBar();
