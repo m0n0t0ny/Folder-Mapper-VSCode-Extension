@@ -22,38 +22,31 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
-const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
+const ignore_1 = __importDefault(require("ignore"));
 const os = __importStar(require("os"));
+const path = __importStar(require("path"));
+const vscode = __importStar(require("vscode"));
 const FolderMapperViewProvider_1 = require("./FolderMapperViewProvider");
 let selectedFolder;
 let outputFolder;
+let ignoreFilePath;
 let statusBarItem;
 let provider;
 class EmptyFolderError extends Error {
 }
+function updateUI() {
+    provider.updateView(selectedFolder?.fsPath || "Not selected", outputFolder || getDefaultOutputFolder(), ignoreFilePath || "Not selected");
+}
 // Funzione per ottenere la cartella home dell'utente
 function getDefaultOutputFolder() {
     return os.homedir();
-}
-// Funzione per selezionare la cartella di output
-async function selectOutputFolder() {
-    const folderUri = await vscode.window.showOpenDialog({
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: "Select Output Folder",
-        defaultUri: vscode.Uri.file(outputFolder || getDefaultOutputFolder())
-    });
-    if (folderUri && folderUri.length > 0) {
-        outputFolder = folderUri[0].fsPath;
-        vscode.window.showInformationMessage(`Output folder set to: ${outputFolder}`);
-        updateStatusBar();
-        updateUI();
-    }
 }
 // Funzione per selezionare la cartella da mappare
 async function selectFolder() {
@@ -71,9 +64,22 @@ async function selectFolder() {
         updateUI();
     }
 }
-function updateUI() {
-    provider.updateView(selectedFolder?.fsPath || "Not selected", outputFolder || getDefaultOutputFolder());
+// Funzione per selezionare la cartella di output
+async function selectOutputFolder() {
+    const folderUri = await vscode.window.showOpenDialog({
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: "Select Output Folder",
+        defaultUri: vscode.Uri.file(outputFolder || getDefaultOutputFolder())
+    });
+    if (folderUri && folderUri.length > 0) {
+        outputFolder = folderUri[0].fsPath;
+        vscode.window.showInformationMessage(`Output folder set to: ${outputFolder}`);
+        updateStatusBar();
+        updateUI();
+    }
 }
+// funzione per generare una mappatura
 async function generateFileHierarchy(startPath, outputFile, translations, lang, depthLimit, progressCallback) {
     try {
         console.log(`Starting hierarchy generation from: ${startPath}`);
@@ -85,6 +91,11 @@ async function generateFileHierarchy(startPath, outputFile, translations, lang, 
         output.write("=" + "=".repeat(49) + "\n\n");
         const totalItems = countItems(startPath, depthLimit);
         let processedItems = 0;
+        // Inizializza ignore
+        const ig = (0, ignore_1.default)();
+        if (ignoreFilePath && fs.existsSync(ignoreFilePath)) {
+            ig.add(fs.readFileSync(ignoreFilePath).toString());
+        }
         function writeHierarchy(currentPath, prefix = "", currentDepth = 0) {
             if (depthLimit !== 0 && currentDepth >= depthLimit) {
                 return;
@@ -96,6 +107,10 @@ async function generateFileHierarchy(startPath, outputFile, translations, lang, 
             catch (err) {
                 throw new Error(`Failed to read directory: ${currentPath}. ${err.message}`);
             }
+            items = items.filter(item => {
+                const relativePath = path.relative(startPath, path.join(currentPath, item));
+                return !ig.ignores(relativePath);
+            });
             items.sort((a, b) => {
                 const aPath = path.join(currentPath, a);
                 const bPath = path.join(currentPath, b);
@@ -122,7 +137,6 @@ async function generateFileHierarchy(startPath, outputFile, translations, lang, 
                 output.write(`${prefix}${linePrefix}${item}${isDirectory ? "/" : ""}\n`);
                 processedItems++;
                 if (progressCallback) {
-                    // Assicuriamoci che il progresso non superi mai il 99% fino al completamento
                     const progress = Math.min((processedItems / totalItems) * 100, 99);
                     progressCallback(progress);
                 }
@@ -134,7 +148,6 @@ async function generateFileHierarchy(startPath, outputFile, translations, lang, 
         }
         writeHierarchy(startPath);
         output.end();
-        // Segnala il 100% di completamento dopo aver finito la scrittura
         if (progressCallback) {
             progressCallback(100);
         }
@@ -223,6 +236,147 @@ function updateStatusBar() {
         statusBarItem.hide();
     }
 }
+async function selectIgnoreFile() {
+    const options = {
+        canSelectMany: false,
+        openLabel: 'Select Ignore File',
+        filters: {
+            'Ignore Files': ['ignore', 'gitignore', 'foldermapperignore'],
+            'All Files': ['*']
+        }
+    };
+    const fileUri = await vscode.window.showOpenDialog(options);
+    if (fileUri && fileUri[0]) {
+        ignoreFilePath = fileUri[0].fsPath;
+        vscode.window.showInformationMessage(`Ignore file set to: ${ignoreFilePath}`);
+        updateUI();
+    }
+}
+// Funzione che crea un file .foldermapperignore di default
+function createDefaultIgnoreFile() {
+    if (!selectedFolder) {
+        vscode.window.showErrorMessage("No folder selected. Please select a folder first.");
+        return;
+    }
+    const ignorePath = path.join(selectedFolder.fsPath, '.foldermapperignore');
+    if (fs.existsSync(ignorePath)) {
+        vscode.window.showWarningMessage('.foldermapperignore already exists. Do you want to overwrite it?', 'Yes', 'No')
+            .then(selection => {
+            if (selection === 'Yes') {
+                writeDefaultIgnoreFile(ignorePath);
+            }
+        });
+    }
+    else {
+        writeDefaultIgnoreFile(ignorePath);
+    }
+}
+function writeDefaultIgnoreFile(filePath) {
+    const defaultContent = `# .foldermapperignore: Configuration file for excluding files and directories from Folder Mapper
+
+# HOW TO USE THIS FILE:
+# 1. Lines starting with '#' are comments and are ignored by Folder Mapper.
+# 2. Empty lines are also ignored.
+# 3. All other lines are treated as patterns for excluding files or directories.
+
+# BASIC SYNTAX:
+# - To exclude a specific file: simply write its name (e.g., 'filename.txt')
+# - To exclude a directory and all its contents: add a trailing slash (e.g., 'directory/')
+# - Use asterisk (*) as a wildcard to match any number of characters
+# - Use question mark (?) to match a single character
+
+# EXAMPLES AND EXPLANATIONS:
+
+# Exclude a specific file
+example.txt
+
+# Exclude a specific directory and all its contents (directory won't appear in the map)
+node_modules/
+
+# Exclude all files with a specific extension
+*.log
+
+# Exclude all files that start with a specific prefix
+temp_*
+
+# Exclude all files that end with a specific suffix
+*_old
+
+# Exclude all files inside a directory, but keep the directory itself in the map (directory will appear empty)
+src/*
+
+# Exclude all files of a specific type in any subdirectory
+**/*.tmp
+
+# Negate a rule (include a file that would otherwise be excluded)
+!important.log
+
+# Exclude files or directories with spaces in their names (use quotes)
+"my documents/"
+
+# Exclude multiple files or directories with similar names
+file[1-3].txt  # Excludes file1.txt, file2.txt, and file3.txt
+
+# Exclude a range of files
+[a-c]*.txt  # Excludes all .txt files starting with a, b, or c
+
+# MORE ADVANCED PATTERNS:
+
+# Exclude all directories named 'test' at any depth
+**/test/
+
+# Exclude all .txt files in the root directory only
+/*.txt
+
+# Exclude all files in the 'logs' directory, but keep the directory
+logs/**
+
+# Exclude all .bak files in any 'backup' directory
+**/backup/**/*.bak
+
+# COMMON EXCLUSIONS:
+# Uncomment (remove the '#') the lines below to activate these common exclusions
+
+# Version control system directories
+#.git/
+#.svn/
+#.hg/
+
+# Build output directories
+#build/
+#dist/
+#out/
+
+# Dependency directories
+#node_modules/
+#vendor/
+
+# Log files
+#*.log
+
+# Temporary files
+#*.tmp
+#*.temp
+#*.swp
+
+# OS generated files
+#.DS_Store
+#Thumbs.db
+
+# IDE/Editor specific files and directories
+#.vscode/
+#.idea/
+#*.sublime-project
+#*.sublime-workspace
+
+# Remember: The more specific your rules, the better control you have over what gets excluded.
+# You can always check the generated map to ensure the exclusions are working as expected.
+`;
+    fs.writeFileSync(filePath, defaultContent);
+    vscode.window.showInformationMessage('Default .foldermapperignore file created successfully.');
+    ignoreFilePath = filePath;
+    updateUI();
+}
 // Funzione di attivazione dell'estensione
 function activate(context) {
     console.log('Congratulations, your extension "folder-mapper" is now active!');
@@ -231,10 +385,12 @@ function activate(context) {
     outputFolder = getDefaultOutputFolder();
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     context.subscriptions.push(statusBarItem);
+    let selectIgnoreFileDisposable = vscode.commands.registerCommand("folderMapper.selectIgnoreFile", selectIgnoreFile);
     let selectFolderDisposable = vscode.commands.registerCommand("folderMapper.selectFolder", selectFolder);
     let mapFolderDisposable = vscode.commands.registerCommand("folderMapper.mapFolder", (depth = 0) => mapFolder(depth));
     let selectOutputFolderDisposable = vscode.commands.registerCommand("folderMapper.selectOutputFolder", selectOutputFolder);
-    context.subscriptions.push(selectFolderDisposable, mapFolderDisposable, selectOutputFolderDisposable);
+    let createDefaultIgnoreFileDisposable = vscode.commands.registerCommand("folderMapper.createDefaultIgnoreFile", createDefaultIgnoreFile);
+    context.subscriptions.push(selectFolderDisposable, mapFolderDisposable, selectOutputFolderDisposable, createDefaultIgnoreFileDisposable, selectIgnoreFileDisposable);
     updateStatusBar();
     updateUI();
 }
