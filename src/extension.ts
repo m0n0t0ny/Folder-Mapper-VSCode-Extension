@@ -20,11 +20,12 @@ async function updateUI() {
       outputFolder || getDefaultOutputFolder(),
       ignoreFilePath || "Not selected"
     );
-    console.log("UI updated");
+    console.log("UI updated with ignore file path:", ignoreFilePath);
   } else {
     console.log("Provider not initialized, skipping UI update");
   }
 }
+
 
 // Funzione per ottenere la cartella home dell'utente
 function getDefaultOutputFolder(): string {
@@ -294,6 +295,28 @@ function updateStatusBar() {
   }
 }
 
+async function selectIgnoreSaveFolder() {
+  const folderUri = await vscode.window.showOpenDialog({
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: "Select Ignore File Save Location",
+    defaultUri: vscode.Uri.file(ignoreFilePath || getDefaultOutputFolder()),
+  });
+
+  if (folderUri && folderUri.length > 0) {
+    ignoreFilePath = folderUri[0].fsPath;
+    vscode.window.showInformationMessage(
+      `Ignore file save location set to: ${ignoreFilePath}`
+    );
+    updateUI();
+  } else {
+    vscode.window.showErrorMessage(
+      "No folder selected for ignore file save location."
+    );
+  }
+}
+
+
 async function selectIgnoreFile() {
   const options: vscode.OpenDialogOptions = {
     canSelectMany: false,
@@ -314,35 +337,7 @@ async function selectIgnoreFile() {
   }
 }
 
-// Funzione che crea un file .foldermapperignore di default
-function createDefaultIgnoreFile() {
-  if (!selectedFolder) {
-    vscode.window.showErrorMessage(
-      "No folder selected. Please select a folder first."
-    );
-    return;
-  }
-
-  const ignorePath = path.join(selectedFolder.fsPath, ".foldermapperignore");
-  if (fs.existsSync(ignorePath)) {
-    vscode.window
-      .showWarningMessage(
-        ".foldermapperignore already exists. Do you want to overwrite it?",
-        "Yes",
-        "No"
-      )
-      .then((selection) => {
-        if (selection === "Yes") {
-          writeDefaultIgnoreFile(ignorePath);
-        }
-      });
-  } else {
-    writeDefaultIgnoreFile(ignorePath);
-  }
-}
-
-function writeDefaultIgnoreFile(filePath: string) {
-  const defaultContent = `# .foldermapperignore: Configuration file for excluding files and directories from Folder Mapper
+const defaultContent = `# .foldermapperignore: Configuration file for excluding files and directories from Folder Mapper
 
 # HOW TO USE THIS FILE:
 # 1. Lines starting with '#' are comments and are ignored by Folder Mapper.
@@ -443,12 +438,64 @@ logs/**
 # You can always check the generated map to ensure the exclusions are working as expected.
 `;
 
+// Funzione che crea un file .foldermapperignore di default
+function createDefaultIgnoreFile() {
+  if (!ignoreFilePath) {
+    vscode.window.showErrorMessage(
+      "No ignore file save location selected. Please select a location first."
+    );
+    return;
+  }
+
+  const ignorePath = path.join(ignoreFilePath, ".foldermapperignore");
+
+  if (fs.existsSync(ignorePath)) {
+    vscode.window
+      .showWarningMessage(
+        ".foldermapperignore already exists in the selected location. Do you want to overwrite it?",
+        "Yes",
+        "No"
+      )
+      .then((selection) => {
+        if (selection === "Yes") {
+          try {
+            fs.writeFileSync(ignorePath, defaultContent);
+            vscode.window.showInformationMessage(
+              `Default .foldermapperignore file created successfully at: ${ignorePath}`
+            );
+          } catch (error) {
+            vscode.window.showErrorMessage(
+              `Failed to create .foldermapperignore file: ${
+                (error as Error).message
+              }`
+            );
+          }
+        }
+      });
+  } else {
+    try {
+      fs.writeFileSync(ignorePath, defaultContent);
+      vscode.window.showInformationMessage(
+        `Default .foldermapperignore file created successfully at: ${ignorePath}`
+      );
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Failed to create .foldermapperignore file: ${(error as Error).message}`
+      );
+    }
+  }
+}
+
+// Funzione per scrivere il contenuto del file .foldermapperignore di default
+function writeDefaultIgnoreFile(filePath: string) {
   fs.writeFileSync(filePath, defaultContent);
-  vscode.window.showInformationMessage(
-    "Default .foldermapperignore file created successfully."
-  );
   ignoreFilePath = filePath;
   updateUI();
+
+  // Mostra una notifica con il percorso completo
+  vscode.window.showInformationMessage(
+    `Default .foldermapperignore file created successfully at: ${filePath}`
+  );
 }
 
 // Funzione di attivazione dell'estensione
@@ -489,6 +536,11 @@ export async function activate(context: vscode.ExtensionContext) {
       "folderMapper.selectOutputFolder",
       selectOutputFolder
     );
+    let selectIgnoreSaveFolderDisposable = vscode.commands.registerCommand(
+      "folderMapper.selectIgnoreSaveFolder",
+      selectIgnoreSaveFolder
+    );
+    context.subscriptions.push(selectIgnoreSaveFolderDisposable);
     let createDefaultIgnoreFileDisposable = vscode.commands.registerCommand(
       "folderMapper.createDefaultIgnoreFile",
       createDefaultIgnoreFile
@@ -498,6 +550,7 @@ export async function activate(context: vscode.ExtensionContext) {
       selectFolderDisposable,
       mapFolderDisposable,
       selectOutputFolderDisposable,
+      selectIgnoreSaveFolderDisposable,
       createDefaultIgnoreFileDisposable,
       selectIgnoreFileDisposable
     );
