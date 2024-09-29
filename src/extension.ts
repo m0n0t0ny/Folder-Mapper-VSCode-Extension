@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
 import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
 import ignore from 'ignore';
+import * as os from "os";
+import * as path from "path";
+import * as vscode from "vscode";
 import { FolderMapperViewProvider } from "./FolderMapperViewProvider";
 
 let selectedFolder: vscode.Uri | undefined;
@@ -478,8 +478,8 @@ export function activate(context: vscode.ExtensionContext) {
     selectFolderDisposable,
     mapFolderDisposable,
     selectOutputFolderDisposable,
+    createDefaultIgnoreFileDisposable,
     selectIgnoreFileDisposable,
-    createDefaultIgnoreFileDisposable
   );
 
   updateStatusBar();

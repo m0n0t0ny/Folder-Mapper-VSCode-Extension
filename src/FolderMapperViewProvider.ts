@@ -147,9 +147,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 <div id="selectedFolder">Selected folder to map: Not selected</div>
                 <button id="selectOutputFolder">Select Output Folder</button>
                 <div id="outputFolder">Selected folder to save folder map: Not selected</div>
+                <button id="createDefaultIgnoreFile">Create Default .foldermapperignore</button>
                 <button id="selectIgnoreFile">Select .foldermapperignore File</button>
                 <div id="ignoreFile">Selected .foldermapperignore file: Not selected</div>
-                <button id="createDefaultIgnoreFile">Create Default .foldermapperignore</button>
                 <div class="input-group">
                     <label for="depthLimit">Depth Limit (0 for unlimited):</label>
                     <input type="number" id="depthLimit" value="0" min="0">
