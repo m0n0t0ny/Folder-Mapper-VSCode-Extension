@@ -26,7 +26,6 @@ async function updateUI() {
   }
 }
 
-
 // Funzione per ottenere la cartella home dell'utente
 function getDefaultOutputFolder(): string {
   return os.homedir();
@@ -316,7 +315,6 @@ async function selectIgnoreSaveFolder() {
   }
 }
 
-
 async function selectIgnoreFile() {
   const options: vscode.OpenDialogOptions = {
     canSelectMany: false,
@@ -521,10 +519,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Registered commands
 
-    let selectIgnoreFileDisposable = vscode.commands.registerCommand(
-      "folderMapper.selectIgnoreFile",
-      selectIgnoreFile
-    );
     let selectFolderDisposable = vscode.commands.registerCommand(
       "folderMapper.selectFolder",
       selectFolder
@@ -541,10 +535,13 @@ export async function activate(context: vscode.ExtensionContext) {
       "folderMapper.selectIgnoreSaveFolder",
       selectIgnoreSaveFolder
     );
-    context.subscriptions.push(selectIgnoreSaveFolderDisposable);
     let createDefaultIgnoreFileDisposable = vscode.commands.registerCommand(
       "folderMapper.createDefaultIgnoreFile",
       createDefaultIgnoreFile
+    );
+    let selectIgnoreFileDisposable = vscode.commands.registerCommand(
+      "folderMapper.selectIgnoreFile",
+      selectIgnoreFile
     );
 
     context.subscriptions.push(
