@@ -35,7 +35,7 @@
   "activationEvents": [
     "onView:folderMapper-view"
   ],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
