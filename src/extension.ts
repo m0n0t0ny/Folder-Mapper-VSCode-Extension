@@ -519,7 +519,8 @@ export async function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(statusBarItem);
 
-    // Register commands
+    // Registered commands
+
     let selectIgnoreFileDisposable = vscode.commands.registerCommand(
       "folderMapper.selectIgnoreFile",
       selectIgnoreFile
