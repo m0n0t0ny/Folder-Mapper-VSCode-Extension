@@ -2,7 +2,7 @@
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
   "description": "Generate a hierarchical tree structure of your project folders and files.",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "publisher": "m0n0t0ny",
   "license": "MIT",
   "sponsor": {
@@ -59,13 +59,13 @@
         "category": "Folder Mapper"
       },
       {
-        "command": "folderMapper.mapFolder",
-        "title": "Map Folder Structure",
+        "command": "folderMapper.selectOutputFolder",
+        "title": "Select Output Folder",
         "category": "Folder Mapper"
       },
       {
-        "command": "folderMapper.selectOutputFolder",
-        "title": "Select Output Folder",
+        "command": "folderMapper.createDefaultIgnoreFile",
+        "title": "Create Default Ignore File",
         "category": "Folder Mapper"
       },
       {
@@ -74,8 +74,13 @@
         "category": "Folder Mapper"
       },
       {
-        "command": "folderMapper.createDefaultIgnoreFile",
-        "title": "Create Default Ignore File",
+        "command": "folderMapper.mapFolder",
+        "title": "Map Folder Structure",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.selectIgnoreSaveFolder",
+        "title": "Select Ignore File Save Location",
         "category": "Folder Mapper"
       }
     ]
