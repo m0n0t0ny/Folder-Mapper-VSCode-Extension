@@ -9,8 +9,7 @@ node_modules/
 # Exclude test files
 test/
 
-# Exclude build files
-dist/
+# Exclude build output
 out/**
 
 # Exclude map files
