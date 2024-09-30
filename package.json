@@ -42,7 +42,7 @@
         {
           "id": "folderMapper-viewContainer",
           "title": "Folder Mapper",
-          "icon": "images/folder-mapper-icon.svg"
+          "icon": "./images/folder-mapper-icon.svg"
         }
       ]
     },
@@ -62,13 +62,28 @@
         "category": "Folder Mapper"
       },
       {
+        "command": "folderMapper.selectOutputFolder",
+        "title": "Select Output Folder",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.createDefaultIgnoreFile",
+        "title": "Create Default Ignore File",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.selectIgnoreFile",
+        "title": "Select Ignore File",
+        "category": "Folder Mapper"
+      },
+      {
         "command": "folderMapper.mapFolder",
         "title": "Map Folder Structure",
         "category": "Folder Mapper"
       },
       {
-        "command": "folderMapper.selectOutputFolder",
-        "title": "Select Output Folder",
+        "command": "folderMapper.selectIgnoreSaveFolder",
+        "title": "Select Ignore File Save Location",
         "category": "Folder Mapper"
       }
     ]
@@ -82,8 +97,9 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.93.0",
+    "@types/mocha": "^10.0.8",
     "@types/node": "20.x",
+    "@types/vscode": "^1.93.0",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",
     "eslint": "^9.11.0",
@@ -92,5 +108,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/m0n0t0ny/folder-mapper.git"
+  },
+  "dependencies": {
+    "ignore": "^6.0.2"
   }
 }

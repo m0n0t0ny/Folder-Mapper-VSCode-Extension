@@ -3,15 +3,21 @@ import * as vscode from "vscode";
 export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "folderMapper-view";
   private _view?: vscode.WebviewView;
+  private _ready: Promise<void>;
+  private _resolveReady!: () => void;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _extensionUri: vscode.Uri) {
+    this._ready = new Promise((resolve) => {
+      this._resolveReady = resolve;
+    });
+  }
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri]
+      localResourceRoots: [this._extensionUri],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -24,37 +30,64 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         case "selectOutputFolder":
           vscode.commands.executeCommand("folderMapper.selectOutputFolder");
           break;
+        case "selectIgnoreFile":
+          vscode.commands.executeCommand("folderMapper.selectIgnoreFile");
+          break;
         case "mapFolder":
           this.resetProgress();
           vscode.commands.executeCommand("folderMapper.mapFolder", data.depth);
+        case "selectIgnoreSaveFolder":
+          vscode.commands.executeCommand("folderMapper.selectIgnoreSaveFolder");
+          break;
+        case "createDefaultIgnoreFile":
+          vscode.commands.executeCommand(
+            "folderMapper.createDefaultIgnoreFile"
+          );
+          break;
+        case "createDefaultIgnoreFile":
+          console.log("Creating default ignore file");
+          await vscode.commands.executeCommand(
+            "folderMapper.createDefaultIgnoreFile"
+          );
+          console.log("Command executed for createDefaultIgnoreFile");
           break;
       }
     });
+
+    this._resolveReady();
   }
 
-  public updateView(selectedFolder?: string, outputFolder?: string) {
+  public async updateView(
+    selectedFolder?: string,
+    outputFolder?: string,
+    ignoreFile?: string
+  ) {
+    await this._ready;
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateFolders",
         selectedFolder: selectedFolder || "Not selected",
-        outputFolder: outputFolder || "Not selected"
+        outputFolder: outputFolder || "Not selected",
+        ignoreFile: ignoreFile || "Not selected",
       });
     }
   }
 
-  public updateProgress(progress: number) {
+  public async updateProgress(progress: number) {
+    await this._ready;
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateProgress",
-        progress: progress
+        progress: progress,
       });
     }
   }
 
-  public resetProgress() {
+  public async resetProgress() {
+    await this._ready;
     if (this._view) {
       this._view.webview.postMessage({
-        type: "resetProgress"
+        type: "resetProgress",
       });
     }
   }
@@ -95,7 +128,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     button:hover {
                         background-color: var(--vscode-button-hoverBackground);
                     }
-                    #selectedFolder, #outputFolder {
+                    #selectedFolder, #outputFolder, #ignoreFile, #ignoreSaveFolder {
                         margin-bottom: 10px;
                         padding: 5px;
                         background-color: var(--vscode-input-background);
@@ -143,13 +176,17 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 <div id="selectedFolder">Selected folder to map: Not selected</div>
                 <button id="selectOutputFolder">Select Output Folder</button>
                 <div id="outputFolder">Selected folder to save folder map: Not selected</div>
+                <button id="selectIgnoreSaveFolder">Select Ignore File Save Location</button>
+                <div id="ignoreSaveFolder" class="input-field">Selected ignore file save folder: Not selected</div>
+                <button id="createDefaultIgnoreFile">Create Default .foldermapperignore</button>
+                <button id="selectIgnoreFile">Select .foldermapperignore File</button>
+                <div id="ignoreFile">Selected .foldermapperignore file: Not selected</div>
                 <div class="input-group">
                     <label for="depthLimit">Depth Limit (0 for unlimited):</label>
                     <input type="number" id="depthLimit" value="0" min="0">
                 </div>
                 <button id="startMapping">Start Mapping</button>
                 <div id="progressBar"><div class="progress"></div></div>
-
                 <script>
                     const vscode = acquireVsCodeApi();
                     document.getElementById('selectFolder').addEventListener('click', () => {
@@ -157,6 +194,15 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     });
                     document.getElementById('selectOutputFolder').addEventListener('click', () => {
                         vscode.postMessage({ type: 'selectOutputFolder' });
+                    });
+                    document.getElementById('selectIgnoreSaveFolder').addEventListener('click', () => {
+                    vscode.postMessage({ type: 'selectIgnoreSaveFolder' });
+                    });
+                    document.getElementById('selectIgnoreFile').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'selectIgnoreFile' });
+                    });
+                    document.getElementById('createDefaultIgnoreFile').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'createDefaultIgnoreFile' });
                     });
                     document.getElementById('startMapping').addEventListener('click', () => {
                         const depth = parseInt(document.getElementById('depthLimit').value);
@@ -168,6 +214,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                             case 'updateFolders':
                                 document.getElementById('selectedFolder').textContent = \`Selected folder to map: \${message.selectedFolder}\`;
                                 document.getElementById('outputFolder').textContent = \`Selected folder to save folder map: \${message.outputFolder}\`;
+                                document.getElementById('ignoreSaveFolder').textContent = \`Selected ignore file save folder: \${message.ignoreFile}\`;
                                 break;
                             case 'updateProgress':
                                 const progressBar = document.querySelector('#progressBar .progress');
