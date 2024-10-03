@@ -39,7 +39,7 @@
         {
           "id": "folderMapper-viewContainer",
           "title": "Folder Mapper",
-          "icon": "images/folder-mapper-icon.svg"
+          "icon": "./images/folder-mapper-icon.svg"
         }
       ]
     },
@@ -107,5 +107,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/m0n0t0ny/folder-mapper.git"
+  },
+  "dependencies": {
+    "ignore": "^6.0.2"
   }
 }

@@ -1,7 +1,7 @@
 # Folder Mapper
 
 <p>
-    <img src="https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-extension-preview.png" alt>
+    <img src="https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-extension-preview.png" alt=".txt outcome of a mapped folder">
     <em>.txt outcome of a mapped folder</em>
 </p>
 
@@ -9,15 +9,14 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 
 ## Features
 
-**✨ Easy-to-Use Interface**: Select folders and start mapping with just a few clicks.
-
-**📁 Customizable Output**: Choose where to save your folder structure map.
-
-**🚀 Fast and Efficient**: Quickly generate maps for even large project structures.
-
-**🎨 Theme-Aware UI**: Automatically adapts to your VS Code theme for a seamless experience.
-
-**⏳ Progress Visualization**: Watch the mapping progress in real-time.
+📊 Text-Based Mapping: Generate a comprehensive text-based map of your folder structure.
+🔍 Depth Control: Customize the mapping depth to focus on specific levels of your project.
+🚫 Smart Exclusions: Utilize .foldermapperignore files to exclude specific files or directories from mapping.
+🖥️ User-Friendly Interface: Navigate and operate the extension effortlessly through a sleek sidebar interface.
+⏳ Real-Time Progress: Track the mapping process with a visual progress bar for instant feedback.
+📂 Flexible Output: Choose your preferred location to save the generated folder structure map.
+🎨 Theme-Aware Design: Experience a seamless look with UI that automatically adapts to your VS Code theme.
+⚡ Efficient Performance: Quickly generate maps even for large and complex project structures.
 
 ## How to Use
 
@@ -25,7 +24,8 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 2. Click "Select Folder to Map" to choose the folder you want to map.
 3. (Optional) Click "Select Output Folder" to choose where to save the map file.
 4. Set the "Depth Limit" if you want to restrict the mapping depth (0 for unlimited).
-5. Click "Start Mapping" to generate the folder structure map.
+5. (Optional) Create a `.foldermapperignore` file in your project root to exclude specific files or directories.
+6. Click "Start Mapping" to generate the folder structure map.
 
 Folder Mapper in action:
 ![Folder Mapper in Action](https://github.com/m0n0t0ny/Folder-Mapper-VSCode-Extension/blob/main/images/folder-mapper-extension-preview.png)
