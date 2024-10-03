@@ -4,14 +4,8 @@ import { getDefaultFolderMapperDir } from "./extension";
 export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "folderMapper-view";
   private _view?: vscode.WebviewView;
-  private _ready: Promise<void>;
-  private _resolveReady!: () => void;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {
-    this._ready = new Promise((resolve) => {
-      this._resolveReady = resolve;
-    });
-  }
+  constructor(private readonly _extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
@@ -34,9 +28,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         case "selectOutputFolder":
           vscode.commands.executeCommand("folderMapper.selectOutputFolder");
           break;
-        case "selectIgnoreFile":
-          vscode.commands.executeCommand("folderMapper.selectIgnoreFile");
-          break;
         case "mapFolder":
           this.resetProgress();
           vscode.commands.executeCommand("folderMapper.mapFolder", data.depth);
@@ -52,16 +43,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           break;
       }
     });
-
-    this._resolveReady();
   }
 
-  public async updateView(
-    selectedFolder?: string,
-    outputFolder?: string,
-    ignoreFile?: string
-  ) {
-    await this._ready;
+  public updateView(selectedFolder?: string, outputFolder?: string) {
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateFolders",
@@ -75,8 +59,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  public async updateProgress(progress: number) {
-    await this._ready;
+  public updateProgress(progress: number) {
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateProgress",
@@ -85,8 +68,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  public async resetProgress() {
-    await this._ready;
+  public resetProgress() {
     if (this._view) {
       this._view.webview.postMessage({
         type: "resetProgress",
@@ -215,6 +197,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     <button id="ignorePresets">Ignore Presets</button>
                 </div>
                 <div id="progressBar"><div class="progress"></div></div>
+
                 <script>
                     const vscode = acquireVsCodeApi();
                     document.getElementById('selectFolder').addEventListener('click', () => {
@@ -222,15 +205,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     });
                     document.getElementById('selectOutputFolder').addEventListener('click', () => {
                         vscode.postMessage({ type: 'selectOutputFolder' });
-                    });
-                    document.getElementById('selectIgnoreSaveFolder').addEventListener('click', () => {
-                    vscode.postMessage({ type: 'selectIgnoreSaveFolder' });
-                    });
-                    document.getElementById('selectIgnoreFile').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'selectIgnoreFile' });
-                    });
-                    document.getElementById('createDefaultIgnoreFile').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'createDefaultIgnoreFile' });
                     });
                     document.getElementById('startMapping').addEventListener('click', () => {
                         const depth = parseInt(document.getElementById('depthLimit').value);

@@ -1,13 +1,13 @@
-import * as vscode from "vscode";
 import * as fs from "fs";
-import * as path from "path";
 import * as os from "os";
+import * as path from "path";
+import * as vscode from "vscode";
+import { defaultIgnoreContent } from "./defaultIgnoreContent";
 import { FolderMapperViewProvider } from "./FolderMapperViewProvider";
 
 // Global variables to manage extension state
 let selectedFolder: vscode.Uri | undefined;
 let outputFolder: string;
-let ignoreFilePath: string | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let provider: FolderMapperViewProvider;
 let isMappingInProgress = false;
