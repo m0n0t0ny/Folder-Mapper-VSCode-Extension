@@ -1,67 +1,124 @@
-import * as vscode from "vscode";
 import * as fs from "fs";
-import * as path from "path";
 import * as os from "os";
+import * as path from "path";
+import * as vscode from "vscode";
+import { defaultIgnoreContent } from "./defaultIgnoreContent";
 import { FolderMapperViewProvider } from "./FolderMapperViewProvider";
 
+// Global variables to manage extension state
 let selectedFolder: vscode.Uri | undefined;
 let outputFolder: string;
 let statusBarItem: vscode.StatusBarItem;
 let provider: FolderMapperViewProvider;
+let isMappingInProgress = false;
+let shouldStopMapping = false;
 
-class EmptyFolderError extends Error {}
-
-// Funzione per ottenere la cartella home dell'utente
-function getDefaultOutputFolder(): string {
-  return os.homedir();
-}
-
-// Funzione per selezionare la cartella di output
-async function selectOutputFolder() {
-  const folderUri = await vscode.window.showOpenDialog({
-    canSelectFolders: true,
-    canSelectMany: false,
-    openLabel: "Select Output Folder",
-    defaultUri: vscode.Uri.file(outputFolder || getDefaultOutputFolder())
-  });
-
-  if (folderUri && folderUri.length > 0) {
-    outputFolder = folderUri[0].fsPath;
-    vscode.window.showInformationMessage(
-      `Output folder set to: ${outputFolder}`
-    );
-    updateStatusBar();
-    updateUI();
-  }
-}
-
-// Funzione per selezionare la cartella da mappare
-async function selectFolder() {
-  const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const folderUri = await vscode.window.showOpenDialog({
-    canSelectFolders: true,
-    canSelectMany: false,
-    openLabel: "Select Folder to Map",
-    defaultUri: projectRoot ? vscode.Uri.file(projectRoot) : undefined
-  });
-
-  if (folderUri && folderUri.length > 0) {
-    selectedFolder = folderUri[0];
-    vscode.window.showInformationMessage(
-      `Selected folder to map: ${selectedFolder.fsPath}`
-    );
-    updateStatusBar();
-    updateUI();
-  }
-}
-
+// Function to update the user interface
 function updateUI() {
   provider.updateView(
-    selectedFolder?.fsPath || "Not selected",
-    outputFolder || getDefaultOutputFolder()
+    selectedFolder?.fsPath || getDefaultFolderMapperDir(),
+    outputFolder || getDefaultFolderMapperDir()
   );
 }
 
+// Function to get the default Folder Mapper directory
+export function getDefaultFolderMapperDir(): string {
+  return path.join(os.homedir(), "Folder Mapper");
+}
+
+// Function to get the Ignore Presets directory
+function getIgnorePresetsDir(): string {
+  return path.join(getDefaultFolderMapperDir(), "Ignore Presets");
+}
+
+// Function to get the path of the .foldermapperignore file
+function getDefaultIgnoreFilePath(): string {
+  return path.join(getIgnorePresetsDir(), ".foldermapperignore");
+}
+
+// Function to select the folder to map
+async function selectFolder() {
+  try {
+    const folderUri = await vscode.window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectMany: false,
+      openLabel: "Select Folder to Map",
+      defaultUri: vscode.Uri.file(getDefaultFolderMapperDir()),
+    });
+
+    if (folderUri && folderUri.length > 0) {
+      selectedFolder = folderUri[0];
+      vscode.window.showInformationMessage(
+        `Selected folder to map: ${selectedFolder.fsPath}`
+      );
+      updateStatusBar();
+      updateUI();
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Error selecting folder: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+// Function to select the output folder
+async function selectOutputFolder() {
+  try {
+    const folderUri = await vscode.window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectMany: false,
+      openLabel: "Select Output Folder",
+      defaultUri: vscode.Uri.file(outputFolder || getDefaultFolderMapperDir()),
+    });
+
+    if (folderUri && folderUri.length > 0) {
+      outputFolder = folderUri[0].fsPath;
+      vscode.window.showInformationMessage(
+        `Output folder set to: ${outputFolder}`
+      );
+      updateStatusBar();
+      updateUI();
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Error selecting output folder: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+// Function to open the Folder Mapper directory
+async function openFolderMapperDirectory() {
+  try {
+    const folderMapperDir = getDefaultFolderMapperDir();
+    await vscode.env.openExternal(vscode.Uri.file(folderMapperDir));
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Error opening Folder Mapper directory: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+// Function to open the Ignore Presets directory
+async function openIgnorePresetsDirectory() {
+  try {
+    const ignorePresetsDir = getIgnorePresetsDir();
+    await vscode.env.openExternal(vscode.Uri.file(ignorePresetsDir));
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Error opening Ignore Presets directory: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+// Function to generate the folder hierarchy
 async function generateFileHierarchy(
   startPath: string,
   outputFile: string,
@@ -69,7 +126,7 @@ async function generateFileHierarchy(
   lang: string,
   depthLimit: number,
   progressCallback?: (progress: number) => void
-) {
+): Promise<void> {
   try {
     console.log(`Starting hierarchy generation from: ${startPath}`);
 
@@ -77,31 +134,42 @@ async function generateFileHierarchy(
       throw new Error(`The path ${startPath} does not exist.`);
     }
 
+    // If outputFile is not an absolute path, make it relative to the Folder Mapper directory
+    if (!path.isAbsolute(outputFile)) {
+      outputFile = path.join(getDefaultFolderMapperDir(), outputFile);
+    }
+
     const output = fs.createWriteStream(outputFile, { encoding: "utf-8" });
     output.write(`${translations[lang]["folder_map_of"]} ${startPath}\n`);
     output.write("=" + "=".repeat(49) + "\n\n");
 
-    const totalItems = countItems(startPath, depthLimit);
+    let totalItems = 0;
     let processedItems = 0;
 
-    function writeHierarchy(
+    // Recursive function to write the folder hierarchy
+    async function writeHierarchy(
       currentPath: string,
       prefix: string = "",
       currentDepth: number = 0
-    ) {
+    ): Promise<void> {
+      if (shouldStopMapping) {
+        throw new Error("Mapping stopped by user");
+      }
+
       if (depthLimit !== 0 && currentDepth >= depthLimit) {
         return;
       }
 
       let items: string[];
       try {
-        items = fs.readdirSync(currentPath);
-      } catch (err: unknown) {
+        items = await fs.promises.readdir(currentPath);
+      } catch (err) {
         throw new Error(
           `Failed to read directory: ${currentPath}. ${(err as Error).message}`
         );
       }
 
+      // Sort items: directories first, then files
       items.sort((a, b) => {
         const aPath = path.join(currentPath, a);
         const bPath = path.join(currentPath, b);
@@ -112,13 +180,18 @@ async function generateFileHierarchy(
         return a.localeCompare(b);
       });
 
-      items.forEach((item, index) => {
+      for (const [index, item] of items.entries()) {
+        if (shouldStopMapping) {
+          throw new Error("Mapping stopped by user");
+        }
+
         const fullPath = path.join(currentPath, item);
         let isDirectory: boolean;
 
         try {
-          isDirectory = fs.statSync(fullPath).isDirectory();
-        } catch (err: unknown) {
+          const stats = await fs.promises.stat(fullPath);
+          isDirectory = stats.isDirectory();
+        } catch (err) {
           throw new Error(
             `Failed to get stats for: ${fullPath}. ${(err as Error).message}`
           );
@@ -128,34 +201,42 @@ async function generateFileHierarchy(
         const linePrefix = isLast ? "└── " : "├── ";
         const newPrefix = prefix + (isLast ? "    " : "│   ");
 
+        // Write the current item to the output file
         output.write(
           `${prefix}${linePrefix}${item}${isDirectory ? "/" : ""}\n`
         );
         processedItems++;
 
         if (progressCallback) {
-          // Assicuriamoci che il progresso non superi mai il 99% fino al completamento
+          // Ensure progress never exceeds 99% until completion
           const progress = Math.min((processedItems / totalItems) * 100, 99);
           progressCallback(progress);
         }
 
+        // If it's a directory and we haven't reached the depth limit, continue recursively
         if (
           isDirectory &&
           (depthLimit === 0 || currentDepth < depthLimit - 1)
         ) {
-          writeHierarchy(fullPath, newPrefix, currentDepth + 1);
+          await writeHierarchy(fullPath, newPrefix, currentDepth + 1);
         }
-      });
+      }
     }
 
-    writeHierarchy(startPath);
+    // Count total items before starting the hierarchy generation
+    totalItems = await countItems(startPath, depthLimit);
+
+    await writeHierarchy(startPath);
     output.end();
 
-    // Segnala il 100% di completamento dopo aver finito la scrittura
+    // Signal 100% completion after finishing writing
     if (progressCallback) {
       progressCallback(100);
     }
   } catch (e) {
+    if (e instanceof Error && e.message === "Mapping stopped by user") {
+      throw e;
+    }
     if (e instanceof Error) {
       vscode.window.showErrorMessage(`Error generating map: ${e.message}`);
       console.error(
@@ -164,33 +245,50 @@ async function generateFileHierarchy(
     } else {
       vscode.window.showErrorMessage(`An unknown error occurred: ${String(e)}`);
     }
+    throw e; // Re-throw the error for the caller to handle
   }
 }
 
-function countItems(
+// Function to count the total number of items in a folder
+async function countItems(
   dir: string,
   depthLimit: number,
   currentDepth: number = 0
-): number {
-  if (depthLimit !== 0 && currentDepth >= depthLimit) {
-    return 1; // Conta la directory corrente ma non andare oltre
+): Promise<number> {
+  if (shouldStopMapping) {
+    throw new Error("Mapping stopped by user");
   }
 
-  let count = 1; // Conta la directory corrente
-  const items = fs.readdirSync(dir);
-  for (const item of items) {
-    const fullPath = path.join(dir, item);
-    if (fs.statSync(fullPath).isDirectory()) {
-      count += countItems(fullPath, depthLimit, currentDepth + 1);
-    } else {
-      count++;
+  if (depthLimit !== 0 && currentDepth >= depthLimit) {
+    return 1; // Count the current directory but don't go further
+  }
+
+  let count = 1; // Count the current directory
+  try {
+    const items = await fs.promises.readdir(dir);
+    for (const item of items) {
+      if (shouldStopMapping) {
+        throw new Error("Mapping stopped by user");
+      }
+      const fullPath = path.join(dir, item);
+      const stats = await fs.promises.stat(fullPath);
+      if (stats.isDirectory()) {
+        count += await countItems(fullPath, depthLimit, currentDepth + 1);
+      } else {
+        count++;
+      }
     }
+  } catch (error) {
+    if (error instanceof Error && error.message === "Mapping stopped by user") {
+      throw error;
+    }
+    console.error(`Error counting items in ${dir}:`, error);
   }
   return count;
 }
 
-// Funzione per mappare la struttura della cartella
-function mapFolder(depth: number = 0) {
+// Function to map the folder structure
+async function mapFolder(depth: number = 0) {
   if (!selectedFolder) {
     vscode.window.showErrorMessage(
       "No folder selected. Please select a folder first."
@@ -212,21 +310,61 @@ function mapFolder(depth: number = 0) {
   const translations = {
     en: {
       folder_map_of: "Folder map of",
-      empty_folder_error: "The selected folder is empty."
-    }
+      empty_folder_error: "The selected folder is empty.",
+    },
   };
 
-  provider.resetProgress(); // Reset progress bar before starting new mapping
+  provider.resetProgress();
+  provider.startMapping();
+  console.log("startMapping called");
+  isMappingInProgress = true;
+  shouldStopMapping = false;
 
-  vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: "Mapping folder structure",
-      cancellable: false
-    },
-    async (progress) => {
-      let currentProgress = 0;
-      try {
+  try {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Mapping folder structure",
+        cancellable: true,
+      },
+      async (progress, token) => {
+        token.onCancellationRequested(() => {
+          shouldStopMapping = true;
+        });
+
+        let currentProgress = 0;
+
+        // Check if mapping should be stopped before starting
+        if (shouldStopMapping) {
+          throw new Error("Mapping stopped by user");
+        }
+
+        // Counting items phase
+        progress.report({ message: "Counting items..." });
+        let totalItems: number;
+        try {
+          totalItems = await countItems(folderToMap, depth);
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message === "Mapping stopped by user"
+          ) {
+            throw error;
+          }
+          throw new Error(
+            `Error counting items: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+
+        // Check if mapping should be stopped after counting
+        if (shouldStopMapping) {
+          throw new Error("Mapping stopped by user");
+        }
+
+        // Generating hierarchy phase
+        progress.report({ message: "Generating hierarchy..." });
         await generateFileHierarchy(
           folderToMap,
           outputFilePath,
@@ -235,30 +373,47 @@ function mapFolder(depth: number = 0) {
           depth,
           (progressPercent) => {
             const increment = progressPercent - currentProgress;
-            progress.report({ increment });
+            progress.report({ increment, message: "Generating hierarchy..." });
             currentProgress = progressPercent;
             provider.updateProgress(progressPercent);
           }
         );
-        provider.updateProgress(100); // Ensure progress reaches 100%
+
+        provider.updateProgress(100);
         vscode.window.showInformationMessage(
           `Folder structure mapped successfully. Output file: ${outputFilePath}`
         );
-        vscode.workspace.openTextDocument(outputFilePath).then((doc) => {
-          vscode.window.showTextDocument(doc);
-        });
-      } catch (error) {
-        provider.resetProgress(); // Reset progress in case of error
-        if (error instanceof Error) {
-          vscode.window.showErrorMessage(
-            `Error mapping folder: ${error.message}`
-          );
-        }
+        const doc = await vscode.workspace.openTextDocument(outputFilePath);
+        await vscode.window.showTextDocument(doc);
       }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "Mapping stopped by user") {
+      vscode.window.showInformationMessage("Mapping stopped by user");
+    } else {
+      vscode.window.showErrorMessage(
+        `Error mapping folder: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
-  );
+  } finally {
+    isMappingInProgress = false;
+    shouldStopMapping = false;
+    provider.resetProgress();
+  }
 }
 
+// Function to stop the mapping process
+function stopMapping() {
+  if (isMappingInProgress) {
+    shouldStopMapping = true;
+  } else {
+    vscode.window.showInformationMessage("No mapping in progress to stop");
+  }
+}
+
+// Function to update the status bar
 function updateStatusBar() {
   if (selectedFolder) {
     statusBarItem.text = `$(file-directory) ${path.basename(
@@ -266,56 +421,106 @@ function updateStatusBar() {
     )}`;
     statusBarItem.tooltip = `Folder to map: ${
       selectedFolder.fsPath
-    }\nOutput folder: ${outputFolder || getDefaultOutputFolder()}`;
+    }\nOutput folder: ${outputFolder || getDefaultFolderMapperDir()}`;
     statusBarItem.show();
   } else {
     statusBarItem.hide();
   }
 }
 
-// Funzione di attivazione dell'estensione
-export function activate(context: vscode.ExtensionContext) {
-  console.log('Congratulations, your extension "folder-mapper" is now active!');
+// Function to initialize Folder Mapper configuration
+async function initializeFolderMapperConfig() {
+  const folderMapperDir = getDefaultFolderMapperDir();
+  const ignorePresetsDir = getIgnorePresetsDir();
+  const ignoreFilePath = getDefaultIgnoreFilePath();
 
-  provider = new FolderMapperViewProvider(context.extensionUri);
+  try {
+    // Create a Folder Mapper directory if it doesn't exist
+    await fs.promises.mkdir(folderMapperDir, { recursive: true });
+    console.log(`Created Folder Mapper directory at: ${folderMapperDir}`);
 
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      FolderMapperViewProvider.viewType,
-      provider
-    )
-  );
+    // Create an Ignore Presets directory if it doesn't exist
+    await fs.promises.mkdir(ignorePresetsDir, { recursive: true });
+    console.log(`Created Ignore Presets directory at: ${ignorePresetsDir}`);
 
-  outputFolder = getDefaultOutputFolder();
+    // Create a .foldermapperignore file if it doesn't exist
+    if (!fs.existsSync(ignoreFilePath)) {
+      await fs.promises.writeFile(ignoreFilePath, defaultIgnoreContent);
+      console.log(`Created .foldermapperignore file at: ${ignoreFilePath}`);
+    } else {
+      console.log(
+        `.foldermapperignore file already exists at: ${ignoreFilePath}`
+      );
+    }
 
-  statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100
-  );
-  context.subscriptions.push(statusBarItem);
-
-  let selectFolderDisposable = vscode.commands.registerCommand(
-    "folderMapper.selectFolder",
-    selectFolder
-  );
-  let mapFolderDisposable = vscode.commands.registerCommand(
-    "folderMapper.mapFolder",
-    (depth: number = 0) => mapFolder(depth)
-  );
-  let selectOutputFolderDisposable = vscode.commands.registerCommand(
-    "folderMapper.selectOutputFolder",
-    selectOutputFolder
-  );
-
-  context.subscriptions.push(
-    selectFolderDisposable,
-    mapFolderDisposable,
-    selectOutputFolderDisposable
-  );
-
-  updateStatusBar();
-  updateUI();
+    // Set the default output folder
+    outputFolder = folderMapperDir;
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Error initializing Folder Mapper configuration: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
 }
 
-// Funzione di disattivazione dell'estensione
+// Extension activation function
+export async function activate(context: vscode.ExtensionContext) {
+  console.log('Congratulations, your extension "folder-mapper" is now active!');
+
+  try {
+    await initializeFolderMapperConfig();
+
+    provider = new FolderMapperViewProvider(context.extensionUri);
+
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(
+        FolderMapperViewProvider.viewType,
+        provider
+      )
+    );
+
+    statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      100
+    );
+    context.subscriptions.push(statusBarItem);
+
+    // Register extension commands
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "folderMapper.selectFolder",
+        selectFolder
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.mapFolder",
+        (depth: number = 0) => mapFolder(depth)
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.selectOutputFolder",
+        selectOutputFolder
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.mappedFolders",
+        openFolderMapperDirectory
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.ignorePresets",
+        openIgnorePresetsDirectory
+      ),
+      vscode.commands.registerCommand("folderMapper.stopMapping", stopMapping)
+    );
+
+    updateStatusBar();
+    updateUI();
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Error activating Folder Mapper extension: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+// Extension deactivation function
 export function deactivate() {}

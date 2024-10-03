@@ -28,7 +28,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 5. Click "Start Mapping" to generate the folder structure map.
 
 Folder Mapper in action:
-![Folder Mapper in Action](https://raw.githubusercontent.com/m0n0t0ny/folder-mapper/main/images/folder-mapper-demo.gif)
+![Folder Mapper in Action](https://github.com/m0n0t0ny/Folder-Mapper-VSCode-Extension/blob/main/images/folder-mapper-extension-preview.png)
 
 ## Requirements
 
@@ -42,12 +42,11 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## What's New in 1.1.0
+## What's New in 1.1.2
 
-- **Depth Limit Feature**: You can now specify how deep you want the mapper to go into your folder structure.
-- **Improved Progress Tracking**: A progress bar now shows you the real-time status of the mapping process.
-- **UI Enhancements**: We've made the interface slightly more intuitive and visually appealing.
-- **Bug Fixes**: Several issues with progress tracking and UI updates have been resolved.
+- **Stop Mapping**: You can now stop the mapping process at any time with a single click.
+- **UI Enhancements**: Improved interface for a more intuitive user experience.
+- **Bug Fixes**: Various minor issues have been resolved for smoother operation.
 
 ## Feedback and Contributions
 

@@ -2,6 +2,22 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.1.21] - 2024-10-03
+
+### Fixed
+
+- Fixed the GIF path in the README: Users can now view a demo GIF from the Marketplace or through the extension settings.
+
+## [1.1.2] - 2024-10-03
+
+### Added
+
+- Stop Mapping feature: Users can now interrupt the mapping process at any time
+
+### Changed
+
+- Improved UI to accommodate new features
+
 ## [1.1.1] - 2024-09-26
 
 ### Fixed

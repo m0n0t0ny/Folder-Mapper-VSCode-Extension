@@ -2,7 +2,7 @@
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
   "description": "Generate a hierarchical tree structure of your project folders and files.",
-  "version": "1.2.20",
+  "version": "1.2.24",
   "publisher": "m0n0t0ny",
   "license": "MIT",
   "sponsor": {
@@ -32,9 +32,6 @@
     "color": "#dfdfdf",
     "theme": "light"
   },
-  "activationEvents": [
-    "onView:folderMapper-view"
-  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -62,13 +59,28 @@
         "category": "Folder Mapper"
       },
       {
+        "command": "folderMapper.selectOutputFolder",
+        "title": "Select Output Folder",
+        "category": "Folder Mapper"
+      },
+      {
         "command": "folderMapper.mapFolder",
         "title": "Map Folder Structure",
         "category": "Folder Mapper"
       },
       {
-        "command": "folderMapper.selectOutputFolder",
-        "title": "Select Output Folder",
+        "command": "folderMapper.stopMapping",
+        "title": "Stop Mapping",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.mappedFolders",
+        "title": "Mapped Folders",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.ignorePresets",
+        "title": "Ignore Presets",
         "category": "Folder Mapper"
       }
     ]
@@ -82,12 +94,15 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.93.0",
     "@types/node": "20.x",
+    "@types/vscode": "^1.93.0",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",
     "eslint": "^9.11.0",
     "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "ignore": "^6.0.2"
   },
   "repository": {
     "type": "git",

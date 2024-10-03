@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getDefaultFolderMapperDir } from "./extension";
 
 export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "folderMapper-view";
@@ -11,12 +12,15 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri]
+      localResourceRoots: [this._extensionUri],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (data) => {
+      if (data.type === "webviewLoaded") {
+        this.updateView();
+      }
       switch (data.type) {
         case "selectFolder":
           vscode.commands.executeCommand("folderMapper.selectFolder");
@@ -28,6 +32,15 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           this.resetProgress();
           vscode.commands.executeCommand("folderMapper.mapFolder", data.depth);
           break;
+        case "stopMapping":
+          vscode.commands.executeCommand("folderMapper.stopMapping");
+          break;
+        case "mappedFolders":
+          vscode.commands.executeCommand("folderMapper.mappedFolders");
+          break;
+        case "ignorePresets":
+          vscode.commands.executeCommand("folderMapper.ignorePresets");
+          break;
       }
     });
   }
@@ -36,8 +49,12 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateFolders",
-        selectedFolder: selectedFolder || "Not selected",
-        outputFolder: outputFolder || "Not selected"
+        selectedFolder: selectedFolder
+          ? vscode.Uri.file(selectedFolder).fsPath
+          : getDefaultFolderMapperDir(),
+        outputFolder: outputFolder
+          ? vscode.Uri.file(outputFolder).fsPath
+          : getDefaultFolderMapperDir(),
       });
     }
   }
@@ -46,7 +63,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     if (this._view) {
       this._view.webview.postMessage({
         type: "updateProgress",
-        progress: progress
+        progress: progress,
       });
     }
   }
@@ -54,8 +71,19 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public resetProgress() {
     if (this._view) {
       this._view.webview.postMessage({
-        type: "resetProgress"
+        type: "resetProgress",
       });
+    }
+  }
+
+  public startMapping() {
+    if (this._view) {
+      console.log("Sending startMapping message to webview");
+      this._view.webview.postMessage({
+        type: "startMapping",
+      });
+    } else {
+      console.log("View is not available");
     }
   }
 
@@ -95,13 +123,18 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     button:hover {
                         background-color: var(--vscode-button-hoverBackground);
                     }
-                    #selectedFolder, #outputFolder {
+                    #selectedFolder, #outputFolder, #depthLimit {
+                        min-height: 19px;
                         margin-bottom: 10px;
                         padding: 5px;
                         background-color: var(--vscode-input-background);
                         color: var(--vscode-input-foreground);
                         border: 1px solid var(--vscode-input-border);
                         border-radius: 2px;
+                    }
+                    #depthLimit {
+                        margin-top: 0px;
+                        margin-bottom: 0px;
                     }
                     #progressBar {
                         width: 100%;
@@ -136,18 +169,33 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                         flex: 1 1 auto;
                         margin-bottom: 0;
                     }
+                    .buttons-group {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 10px;
+                        gap: 10px;
+                    }
+                    #stopMapping {
+                        background-color: var(--vscode-errorForeground);
+                        display: none;
+                    }
                 </style>
             </head>
             <body>
                 <button id="selectFolder">Select Folder to Map</button>
-                <div id="selectedFolder">Selected folder to map: Not selected</div>
+                <div id="selectedFolder"></div>
                 <button id="selectOutputFolder">Select Output Folder</button>
-                <div id="outputFolder">Selected folder to save folder map: Not selected</div>
+                <div id="outputFolder"></div>
                 <div class="input-group">
                     <label for="depthLimit">Depth Limit (0 for unlimited):</label>
                     <input type="number" id="depthLimit" value="0" min="0">
                 </div>
                 <button id="startMapping">Start Mapping</button>
+                <button id="stopMapping">Stop Mapping</button>
+                <div class="buttons-group">
+                    <button id="mappedFolders">Mapped Folders</button>
+                    <button id="ignorePresets">Ignore Presets</button>
+                </div>
                 <div id="progressBar"><div class="progress"></div></div>
 
                 <script>
@@ -161,34 +209,65 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                     document.getElementById('startMapping').addEventListener('click', () => {
                         const depth = parseInt(document.getElementById('depthLimit').value);
                         vscode.postMessage({ type: 'mapFolder', depth: depth });
+                        document.getElementById('stopMapping').style.display = 'block';
+                        document.getElementById('startMapping').style.display = 'none';
+                    });
+                    document.getElementById('stopMapping').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'stopMapping' });
+                    });
+                    document.getElementById('stopMapping').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'stopMapping' });
+                        document.getElementById('stopMapping').style.display = 'none';
+                        document.getElementById('startMapping').style.display = 'block';
+                    });
+                    document.getElementById('mappedFolders').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'mappedFolders' });
+                    });
+                    document.getElementById('ignorePresets').addEventListener('click', () => {
+                        vscode.postMessage({ type: 'ignorePresets' });
+                    });
+                    window.addEventListener('load', () => {
+                        vscode.postMessage({ type: 'webviewLoaded' });
                     });
                     window.addEventListener('message', event => {
-                        const message = event.data;
-                        switch (message.type) {
-                            case 'updateFolders':
-                                document.getElementById('selectedFolder').textContent = \`Selected folder to map: \${message.selectedFolder}\`;
-                                document.getElementById('outputFolder').textContent = \`Selected folder to save folder map: \${message.outputFolder}\`;
-                                break;
-                            case 'updateProgress':
-                                const progressBar = document.querySelector('#progressBar .progress');
-                                progressBar.style.width = \`\${message.progress}%\`;
-                                document.getElementById('progressBar').style.display = 'block';
-                                if (message.progress >= 100) {
-                                    setTimeout(() => {
-                                        document.getElementById('progressBar').style.display = 'none';
-                                    }, 1000);
-                                }
-                                break;
-                            case 'resetProgress':
-                                const progressBarReset = document.querySelector('#progressBar .progress');
-                                progressBarReset.style.width = '0%';
+                const message = event.data;
+                console.log('Received message:', message); // Add this line for debugging
+                switch (message.type) {
+                    case 'updateFolders':
+                        document.getElementById('selectedFolder').textContent = message.selectedFolder || 'Not selected';
+                        document.getElementById('outputFolder').textContent = message.outputFolder || 'Not selected';
+                        break;
+                    case 'updateProgress':
+                        const progressBar = document.querySelector('#progressBar .progress');
+                        progressBar.style.width = \`\${message.progress}%\`;
+                        document.getElementById('progressBar').style.display = 'block';
+                        if (message.progress >= 100) {
+                            setTimeout(() => {
                                 document.getElementById('progressBar').style.display = 'none';
-                                break;
+                                document.getElementById('stopMapping').style.display = 'none';
+                                document.getElementById('startMapping').style.display = 'block';
+                            }, 1000);
                         }
-                    });
-                </script>
-            </body>
-            </html>
-        `;
+                        break;
+                    case 'resetProgress':
+                        const progressBarReset = document.querySelector('#progressBar .progress');
+                        progressBarReset.style.width = '0%';
+                        document.getElementById('progressBar').style.display = 'none';
+                        document.getElementById('stopMapping').style.display = 'none';
+                        document.getElementById('startMapping').style.display = 'block';
+                        break;
+                    case 'startMapping':
+                        console.log('startMapping message received'); // Add this line for debugging
+                        document.getElementById('stopMapping').style.display = 'block';
+                        document.getElementById('startMapping').style.display = 'none';
+                        break;
+                    default:
+                        console.log('Unknown message type:', message.type); // Add this line for debugging
+                }
+            });
+        </script>
+    </body>
+    </html>
+  `;
   }
 }
