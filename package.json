@@ -107,8 +107,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/m0n0t0ny/folder-mapper.git"
-  },
-  "dependencies": {
-    "ignore": "^6.0.2"
   }
 }
