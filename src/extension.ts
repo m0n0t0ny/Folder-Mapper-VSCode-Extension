@@ -14,6 +14,7 @@ let provider: FolderMapperViewProvider;
 let isMappingInProgress = false;
 let shouldStopMapping = false;
 let selectedIgnoreFile: string | undefined;
+let context: vscode.ExtensionContext;
 
 // Function to update the user interface
 function updateUI() {
@@ -41,15 +42,22 @@ function getDefaultIgnoreFilePath(): string {
 // Function to select the folder to map
 async function selectFolder() {
   try {
+    const lastPath = context.globalState.get<string>("lastSelectedFolder");
     const folderUri = await vscode.window.showOpenDialog({
       canSelectFolders: true,
       canSelectMany: false,
       openLabel: "Select Folder to Map",
-      defaultUri: vscode.Uri.file(getDefaultFolderMapperDir()),
+      defaultUri: lastPath
+        ? vscode.Uri.file(lastPath)
+        : vscode.Uri.file(getDefaultFolderMapperDir()),
     });
 
     if (folderUri && folderUri.length > 0) {
       selectedFolder = folderUri[0];
+      await context.globalState.update(
+        "lastSelectedFolder",
+        selectedFolder.fsPath
+      );
       vscode.window.showInformationMessage(
         `Selected folder to map: ${selectedFolder.fsPath}`
       );
@@ -503,7 +511,8 @@ async function initializeFolderMapperConfig() {
 }
 
 // Extension activation function
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(extensionContext: vscode.ExtensionContext) {
+  context = extensionContext;
   try {
     console.log("Activating Folder Mapper extension...");
     await initializeFolderMapperConfig();
@@ -559,8 +568,13 @@ export async function activate(context: vscode.ExtensionContext) {
       )
     );
 
-    updateStatusBar();
-    await provider.updateView();
+    const lastSelectedFolder =
+      context.globalState.get<string>("lastSelectedFolder");
+    if (lastSelectedFolder) {
+      selectedFolder = vscode.Uri.file(lastSelectedFolder);
+      updateStatusBar();
+      await provider.updateView(selectedFolder.fsPath, outputFolder);
+    }
   } catch (error) {
     console.error("Error activating Folder Mapper extension:", error);
     vscode.window.showErrorMessage(

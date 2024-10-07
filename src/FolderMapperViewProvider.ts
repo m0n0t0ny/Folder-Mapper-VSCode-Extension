@@ -1,13 +1,19 @@
 import * as vscode from "vscode";
-import { getDefaultFolderMapperDir, getIgnoreFiles } from "./extension";
+import { getIgnoreFiles } from "./extension";
 
 export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "folderMapper-view";
   private _view?: vscode.WebviewView;
+  private _selectedFolder: string = "";
+  private _outputFolder: string = "";
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
-  public resolveWebviewView(webviewView: vscode.WebviewView) {
+  public resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken
+  ) {
     this._view = webviewView;
 
     webviewView.webview.options = {
@@ -22,6 +28,12 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         case "loadIgnoreFiles":
           const ignoreFiles = await getIgnoreFiles();
           this.updateIgnoreFiles(ignoreFiles);
+          break;
+        case "selectIgnoreFile":
+          vscode.commands.executeCommand(
+            "folderMapper.selectIgnoreFile",
+            data.file
+          );
           break;
         case "selectIgnoreFile":
           vscode.commands.executeCommand(
@@ -51,8 +63,21 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    // Carica i file ignore all'avvio
     this.loadIgnoreFiles();
+
+    this.restoreState();
+
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this.restoreState();
+      }
+    });
+  }
+
+  private async restoreState() {
+    if (this._view) {
+      await this.updateView(this._selectedFolder, this._outputFolder);
+    }
   }
 
   private async loadIgnoreFiles() {
@@ -65,17 +90,16 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     outputFolder?: string,
     ignoreFiles?: string[]
   ) {
+    if (selectedFolder) this._selectedFolder = selectedFolder;
+    if (outputFolder) this._outputFolder = outputFolder;
+
     if (this._view) {
       try {
         const files = ignoreFiles || (await getIgnoreFiles());
         await this._view.webview.postMessage({
-          type: "updateFolders",
-          selectedFolder: selectedFolder
-            ? vscode.Uri.file(selectedFolder).fsPath
-            : getDefaultFolderMapperDir(),
-          outputFolder: outputFolder
-            ? vscode.Uri.file(outputFolder).fsPath
-            : getDefaultFolderMapperDir(),
+          type: "updateUI",
+          selectedFolder: this._selectedFolder || "Not selected",
+          outputFolder: this._outputFolder || "Not selected",
           ignoreFiles: files,
         });
       } catch (error) {
@@ -299,12 +323,18 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           window.addEventListener('message', event => {
             const message = event.data;
             switch (message.type) {
-              case 'updateIgnoreFiles':
+              case 'updateUI':
+                document.getElementById('selectedFolder').textContent = message.selectedFolder;
+                document.getElementById('outputFolder').textContent = message.outputFolder;
                 updateIgnoreFileSelect(message.ignoreFiles);
                 break;
-              case 'updateFolders':
+              case 'updateUI':
                 document.getElementById('selectedFolder').textContent = message.selectedFolder || 'Not selected';
                 document.getElementById('outputFolder').textContent = message.outputFolder || 'Not selected';
+                updateIgnoreFileSelect(message.ignoreFiles);
+                break;
+              case 'updateIgnoreFiles':
+                updateIgnoreFileSelect(message.ignoreFiles);
                 break;
               case 'updateProgress':
                 const progressBar = document.querySelector('#progressBar .progress');
