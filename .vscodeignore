@@ -3,14 +3,11 @@
 .vscode-test/**
 .vscode-test.mjs
 
-# Exclude node_modules unless needed
-node_modules/
-
 # Exclude test files
 test/
 
-# Exclude build output
-out/**
+# Exclude source files
+src/**
 
 # Exclude map files
 *.map
@@ -29,3 +26,16 @@ esbuild.js
 .github**
 GUIDA.md
 TODO
+
+# Include necessary runtime dependencies
+!node_modules/**
+node_modules/**/*.d.ts
+node_modules/**/*.md
+node_modules/**/*.txt
+node_modules/**/LICENSE
+node_modules/**/license
+
+# Exclude specific large or unnecessary packages from node_modules
+node_modules/@types/**
+node_modules/typescript/**
+node_modules/eslint/**

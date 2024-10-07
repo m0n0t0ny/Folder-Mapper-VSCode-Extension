@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getDefaultFolderMapperDir } from "./extension";
+import { getDefaultFolderMapperDir, getIgnoreFiles } from "./extension";
 
 export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "folderMapper-view";
@@ -18,10 +18,17 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (data) => {
-      if (data.type === "webviewLoaded") {
-        this.updateView();
-      }
       switch (data.type) {
+        case "loadIgnoreFiles":
+          const ignoreFiles = await getIgnoreFiles();
+          this.updateIgnoreFiles(ignoreFiles);
+          break;
+        case "selectIgnoreFile":
+          vscode.commands.executeCommand(
+            "folderMapper.selectIgnoreFile",
+            data.file
+          );
+          break;
         case "selectFolder":
           vscode.commands.executeCommand("folderMapper.selectFolder");
           break;
@@ -43,19 +50,42 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           break;
       }
     });
+
+    // Carica i file ignore all'avvio
+    this.loadIgnoreFiles();
   }
 
-  public updateView(selectedFolder?: string, outputFolder?: string) {
+  private async loadIgnoreFiles() {
+    const ignoreFiles = await getIgnoreFiles();
+    this.updateIgnoreFiles(ignoreFiles);
+  }
+
+  public async updateView(
+    selectedFolder?: string,
+    outputFolder?: string,
+    ignoreFiles?: string[]
+  ) {
     if (this._view) {
-      this._view.webview.postMessage({
-        type: "updateFolders",
-        selectedFolder: selectedFolder
-          ? vscode.Uri.file(selectedFolder).fsPath
-          : getDefaultFolderMapperDir(),
-        outputFolder: outputFolder
-          ? vscode.Uri.file(outputFolder).fsPath
-          : getDefaultFolderMapperDir(),
-      });
+      try {
+        const files = ignoreFiles || (await getIgnoreFiles());
+        await this._view.webview.postMessage({
+          type: "updateFolders",
+          selectedFolder: selectedFolder
+            ? vscode.Uri.file(selectedFolder).fsPath
+            : getDefaultFolderMapperDir(),
+          outputFolder: outputFolder
+            ? vscode.Uri.file(outputFolder).fsPath
+            : getDefaultFolderMapperDir(),
+          ignoreFiles: files,
+        });
+      } catch (error) {
+        console.error("Error updating view:", error);
+        vscode.window.showErrorMessage(
+          `Failed to update view: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
     }
   }
 
@@ -87,187 +117,226 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  public updateIgnoreFiles(ignoreFiles: string[]) {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: "updateIgnoreFiles",
+        ignoreFiles: ignoreFiles,
+      });
+    }
+  }
+
   private _getHtmlForWebview(webview: vscode.Webview) {
     return `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Folder Mapper</title>
-                <style>
-                    body { 
-                        padding: 20px; 
-                        color: var(--vscode-foreground);
-                        font-family: var(--vscode-font-family);
-                        font-size: var(--vscode-font-size);
-                        font-weight: var(--vscode-font-weight);
-                    }
-                    button, input { 
-                        width: 100%; 
-                        margin-bottom: 10px; 
-                        background-color: var(--vscode-input-background);
-                        color: var(--vscode-input-foreground);
-                        border: 1px solid var(--vscode-input-border);
-                        border-radius: 2px;
-                        padding: 6px 14px;
-                        font-family: var(--vscode-font-family);
-                        font-size: var(--vscode-font-size);
-                        font-weight: var(--vscode-font-weight);
-                    }
-                    button {
-                        background-color: var(--vscode-button-background);
-                        color: var(--vscode-button-foreground);
-                        cursor: pointer;
-                    }
-                    button:hover {
-                        background-color: var(--vscode-button-hoverBackground);
-                    }
-                    #selectedFolder, #outputFolder, #depthLimit {
-                        min-height: 19px;
-                        margin-bottom: 10px;
-                        padding: 5px;
-                        background-color: var(--vscode-input-background);
-                        color: var(--vscode-input-foreground);
-                        border: 1px solid var(--vscode-input-border);
-                        border-radius: 2px;
-                    }
-                    #depthLimit {
-                        margin-top: 0px;
-                        margin-bottom: 0px;
-                    }
-                    #progressBar {
-                        width: 100%;
-                        height: 5px;
-                        background-color: var(--vscode-input-background);
-                        margin-top: 10px;
-                        display: none;
-                        border-radius: 2px;
-                    }
-                    #progressBar .progress {
-                        height: 100%;
-                        background-color: var(--vscode-progressBar-background);
-                        width: 0%;
-                        transition: width 0.3s ease-in-out;
-                        border-radius: 2px;
-                    }
-                    label {
-                        display: block;
-                        margin-bottom: 5px;
-                    }
-                    .input-group {
-                        display: flex;
-                        align-items: center;
-                        margin-bottom: 10px;
-                    }
-                    .input-group label {
-                        flex: 0 0 auto;
-                        margin-right: 10px;
-                        margin-bottom: 0;
-                    }
-                    .input-group input {
-                        flex: 1 1 auto;
-                        margin-bottom: 0;
-                    }
-                    .buttons-group {
-                        display: flex;
-                        align-items: center;
-                        margin-bottom: 10px;
-                        gap: 10px;
-                    }
-                    #stopMapping {
-                        background-color: var(--vscode-errorForeground);
-                        display: none;
-                    }
-                </style>
-            </head>
-            <body>
-                <button id="selectFolder">Select Folder to Map</button>
-                <div id="selectedFolder"></div>
-                <button id="selectOutputFolder">Select Output Folder</button>
-                <div id="outputFolder"></div>
-                <div class="input-group">
-                    <label for="depthLimit">Depth Limit (0 for unlimited):</label>
-                    <input type="number" id="depthLimit" value="0" min="0">
-                </div>
-                <button id="startMapping">Start Mapping</button>
-                <button id="stopMapping">Stop Mapping</button>
-                <div class="buttons-group">
-                    <button id="mappedFolders">Mapped Folders</button>
-                    <button id="ignorePresets">Ignore Presets</button>
-                </div>
-                <div id="progressBar"><div class="progress"></div></div>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Folder Mapper</title>
+        <style>
+          body { 
+            padding: 20px; 
+            color: var(--vscode-foreground);
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            font-weight: var(--vscode-font-weight);
+          }
+          button, input, select { 
+            width: 100%; 
+            margin-bottom: 10px; 
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 2px;
+            padding: 6px 14px;
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            font-weight: var(--vscode-font-weight);
+          }
+          button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            cursor: pointer;
+          }
+          button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+          }
+          #selectedFolder, #outputFolder, #depthLimit {
+            min-height: 19px;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 2px;
+          }
+          #depthLimit {
+            margin-top: 0px;
+            margin-bottom: 0px;
+          }
+          #progressBar {
+            width: 100%;
+            height: 5px;
+            background-color: var(--vscode-input-background);
+            margin-top: 10px;
+            display: none;
+            border-radius: 2px;
+          }
+          #progressBar .progress {
+            height: 100%;
+            background-color: var(--vscode-progressBar-background);
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+            border-radius: 2px;
+          }
+          label {
+            display: block;
+            margin-bottom: 5px;
+          }
+          .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+          }
+          .input-group label {
+            flex: 0 0 auto;
+            margin-right: 10px;
+            margin-bottom: 0;
+          }
+          .input-group input {
+            flex: 1 1 auto;
+            margin-bottom: 0;
+          }
+          .buttons-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+          }
+          #stopMapping {
+            background-color: var(--vscode-errorForeground);
+            display: none;
+          }
+        </style>
+      </head>
+      <body>
+        <button id="selectFolder">Select Folder to Map</button>
+        <div id="selectedFolder"></div>
+        <button id="selectOutputFolder">Select Output Folder</button>
+        <div id="outputFolder"></div>
+        <div class="input-group">
+          <label for="depthLimit">Depth Limit (0 for unlimited):</label>
+          <input type="number" id="depthLimit" value="0" min="0">
+        </div>
+        <select id="ignoreFileSelect">
+          <option value="">Select an ignore file</option>
+        </select>
+        <button id="startMapping">Start Mapping</button>
+        <button id="stopMapping">Stop Mapping</button>
+        <div class="buttons-group">
+          <button id="mappedFolders">Mapped Folders</button>
+          <button id="ignorePresets">Ignore Presets</button>
+        </div>
+        <div id="progressBar"><div class="progress"></div></div>
 
-                <script>
-                    const vscode = acquireVsCodeApi();
-                    document.getElementById('selectFolder').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'selectFolder' });
-                    });
-                    document.getElementById('selectOutputFolder').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'selectOutputFolder' });
-                    });
-                    document.getElementById('startMapping').addEventListener('click', () => {
-                        const depth = parseInt(document.getElementById('depthLimit').value);
-                        vscode.postMessage({ type: 'mapFolder', depth: depth });
-                        document.getElementById('stopMapping').style.display = 'block';
-                        document.getElementById('startMapping').style.display = 'none';
-                    });
-                    document.getElementById('stopMapping').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'stopMapping' });
-                    });
-                    document.getElementById('stopMapping').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'stopMapping' });
-                        document.getElementById('stopMapping').style.display = 'none';
-                        document.getElementById('startMapping').style.display = 'block';
-                    });
-                    document.getElementById('mappedFolders').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'mappedFolders' });
-                    });
-                    document.getElementById('ignorePresets').addEventListener('click', () => {
-                        vscode.postMessage({ type: 'ignorePresets' });
-                    });
-                    window.addEventListener('load', () => {
-                        vscode.postMessage({ type: 'webviewLoaded' });
-                    });
-                    window.addEventListener('message', event => {
-                const message = event.data;
-                console.log('Received message:', message); // Add this line for debugging
-                switch (message.type) {
-                    case 'updateFolders':
-                        document.getElementById('selectedFolder').textContent = message.selectedFolder || 'Not selected';
-                        document.getElementById('outputFolder').textContent = message.outputFolder || 'Not selected';
-                        break;
-                    case 'updateProgress':
-                        const progressBar = document.querySelector('#progressBar .progress');
-                        progressBar.style.width = \`\${message.progress}%\`;
-                        document.getElementById('progressBar').style.display = 'block';
-                        if (message.progress >= 100) {
-                            setTimeout(() => {
-                                document.getElementById('progressBar').style.display = 'none';
-                                document.getElementById('stopMapping').style.display = 'none';
-                                document.getElementById('startMapping').style.display = 'block';
-                            }, 1000);
-                        }
-                        break;
-                    case 'resetProgress':
-                        const progressBarReset = document.querySelector('#progressBar .progress');
-                        progressBarReset.style.width = '0%';
-                        document.getElementById('progressBar').style.display = 'none';
-                        document.getElementById('stopMapping').style.display = 'none';
-                        document.getElementById('startMapping').style.display = 'block';
-                        break;
-                    case 'startMapping':
-                        console.log('startMapping message received'); // Add this line for debugging
-                        document.getElementById('stopMapping').style.display = 'block';
-                        document.getElementById('startMapping').style.display = 'none';
-                        break;
-                    default:
-                        console.log('Unknown message type:', message.type); // Add this line for debugging
-                }
+        <script>
+          const vscode = acquireVsCodeApi();
+          let ignoreFilesLoaded = false;
+
+          document.getElementById('selectFolder').addEventListener('click', () => {
+            vscode.postMessage({ type: 'selectFolder' });
+          });
+
+          document.getElementById('selectOutputFolder').addEventListener('click', () => {
+            vscode.postMessage({ type: 'selectOutputFolder' });
+          });
+
+          document.getElementById('startMapping').addEventListener('click', () => {
+            const depth = parseInt(document.getElementById('depthLimit').value);
+            vscode.postMessage({ type: 'mapFolder', depth: depth });
+            document.getElementById('stopMapping').style.display = 'block';
+            document.getElementById('startMapping').style.display = 'none';
+          });
+
+          document.getElementById('stopMapping').addEventListener('click', () => {
+            vscode.postMessage({ type: 'stopMapping' });
+            document.getElementById('stopMapping').style.display = 'none';
+            document.getElementById('startMapping').style.display = 'block';
+          });
+
+          document.getElementById('mappedFolders').addEventListener('click', () => {
+            vscode.postMessage({ type: 'mappedFolders' });
+          });
+
+          document.getElementById('ignorePresets').addEventListener('click', () => {
+            vscode.postMessage({ type: 'ignorePresets' });
+          });
+
+          document.getElementById('ignoreFileSelect').addEventListener('mousedown', (event) => {
+            if (!ignoreFilesLoaded) {
+              event.preventDefault();
+              vscode.postMessage({ type: 'loadIgnoreFiles' });
+            }
+          });
+
+          document.getElementById('ignoreFileSelect').addEventListener('change', (event) => {
+            vscode.postMessage({ type: 'selectIgnoreFile', file: event.target.value });
+          });
+
+          function updateIgnoreFileSelect(ignoreFiles) {
+            const ignoreFileSelect = document.getElementById('ignoreFileSelect');
+            ignoreFileSelect.innerHTML = '<option value="">Select an ignore file</option>';
+            ignoreFiles.forEach(file => {
+              const option = document.createElement('option');
+              option.value = file;
+              option.textContent = file;
+              ignoreFileSelect.appendChild(option);
             });
+            ignoreFilesLoaded = true;
+          }
+
+          window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.type) {
+              case 'updateIgnoreFiles':
+                updateIgnoreFileSelect(message.ignoreFiles);
+                break;
+              case 'updateFolders':
+                document.getElementById('selectedFolder').textContent = message.selectedFolder || 'Not selected';
+                document.getElementById('outputFolder').textContent = message.outputFolder || 'Not selected';
+                break;
+              case 'updateProgress':
+                const progressBar = document.querySelector('#progressBar .progress');
+                progressBar.style.width = \`\${message.progress}%\`;
+                document.getElementById('progressBar').style.display = 'block';
+                if (message.progress >= 100) {
+                  setTimeout(() => {
+                    document.getElementById('progressBar').style.display = 'none';
+                    document.getElementById('stopMapping').style.display = 'none';
+                    document.getElementById('startMapping').style.display = 'block';
+                  }, 1000);
+                }
+                break;
+              case 'resetProgress':
+                const progressBarReset = document.querySelector('#progressBar .progress');
+                progressBarReset.style.width = '0%';
+                document.getElementById('progressBar').style.display = 'none';
+                document.getElementById('stopMapping').style.display = 'none';
+                document.getElementById('startMapping').style.display = 'block';
+                break;
+              case 'startMapping':
+                console.log('startMapping message received');
+                document.getElementById('stopMapping').style.display = 'block';
+                document.getElementById('startMapping').style.display = 'none';
+                break;
+              default:
+                console.log('Unknown message type:', message.type);
+            }
+          });
         </script>
-    </body>
-    </html>
-  `;
+      </body>
+      </html>
+    `;
   }
 }

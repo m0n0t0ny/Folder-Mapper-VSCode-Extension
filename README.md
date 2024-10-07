@@ -11,7 +11,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 
 📊 Text-Based Mapping: Generate a comprehensive text-based map of your folder structure.
 🔍 Depth Control: Customize the mapping depth to focus on specific levels of your project.
-🚫 Smart Exclusions: Utilize .foldermapperignore files to exclude specific files or directories from mapping.
+🚫 Smart Exclusions: Utilize ignore files (.gitignore, .vscignore, .foldermapperignore) to exclude specific files or directories from mapping.
 🖥️ User-Friendly Interface: Navigate and operate the extension effortlessly through a sleek sidebar interface.
 ⏳ Real-Time Progress: Track the mapping process with a visual progress bar for instant feedback.
 📂 Flexible Output: Choose your preferred location to save the generated folder structure map.
@@ -24,11 +24,11 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 2. Click "Select Folder to Map" to choose the folder you want to map.
 3. (Optional) Click "Select Output Folder" to choose where to save the map file.
 4. Set the "Depth Limit" if you want to restrict the mapping depth (0 for unlimited).
-5. (Optional) Create a `.foldermapperignore` file in your project root to exclude specific files or directories.
+5. (Optional) Select an ignore file from the dropdown menu to exclude specific files or directories.
 6. Click "Start Mapping" to generate the folder structure map.
 
 Folder Mapper in action:
-![Folder Mapper in Action](https://github.com/m0n0t0ny/Folder-Mapper-VSCode-Extension/blob/main/images/folder-mapper-extension-preview.png)
+![Folder Mapper Demo](https://raw.githubusercontent.com/m0n0t0ny/Folder-Mapper-VSCode-Extension/main/images/folder-mapper-demo.gif)
 
 ## Requirements
 
@@ -42,11 +42,11 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## What's New in 1.1.2
+## What's New in 1.2.1
 
-- **Stop Mapping**: You can now stop the mapping process at any time with a single click.
-- **UI Enhancements**: Improved interface for a more intuitive user experience.
-- **Bug Fixes**: Various minor issues have been resolved for smoother operation.
+- Ignore feature: Users can now select and use ignore files (like .gitignore) to exclude specific files or directories from mapping.
+- Dropdown menu in the UI for selecting ignore files.
+- Resolved an issue where the ignore file feature was not working due to the wrong configuration of the .vscodeignore file.
 
 ## Feedback and Contributions
 
