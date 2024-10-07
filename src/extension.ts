@@ -149,8 +149,20 @@ export async function getIgnoreFiles(): Promise<string[]> {
 
 // Funzione per selezionare un file ignore
 async function selectIgnoreFile(file: string) {
-  selectedIgnoreFile = path.join(getIgnorePresetsDir(), file);
-  vscode.window.showInformationMessage(`Selected ignore file: ${file}`);
+  if (file) {
+    selectedIgnoreFile = path.join(getIgnorePresetsDir(), file);
+    await context.globalState.update("lastSelectedIgnoreFile", file);
+    vscode.window.showInformationMessage(`Selected ignore file: ${file}`);
+  } else {
+    selectedIgnoreFile = undefined;
+    await context.globalState.update("lastSelectedIgnoreFile", undefined);
+    vscode.window.showInformationMessage("No ignore file selected");
+  }
+  await provider.updateView(
+    selectedFolder?.fsPath,
+    outputFolder,
+    selectedIgnoreFile
+  );
 }
 
 // Function to generate the folder hierarchy
@@ -160,6 +172,7 @@ async function generateFileHierarchy(
   translations: any,
   lang: string,
   depthLimit: number,
+  ig: ReturnType<typeof ignore> | undefined,
   progressCallback?: (progress: number) => void
 ): Promise<void> {
   try {
@@ -366,6 +379,29 @@ async function mapFolder(depth: number = 0) {
   isMappingInProgress = true;
   shouldStopMapping = false;
 
+  let ig: ReturnType<typeof ignore> | undefined;
+  if (selectedIgnoreFile) {
+    try {
+      const stats = await fs.promises.stat(selectedIgnoreFile);
+      if (stats.isFile()) {
+        const ignoreContent = await fs.promises.readFile(
+          selectedIgnoreFile,
+          "utf-8"
+        );
+        ig = ignore().add(ignoreContent);
+      } else {
+        vscode.window.showWarningMessage(
+          `Selected ignore file is not a valid file: ${selectedIgnoreFile}`
+        );
+      }
+    } catch (error) {
+      console.error(`Error reading ignore file: ${error}`);
+      vscode.window.showErrorMessage(
+        `Failed to read ignore file: ${selectedIgnoreFile}`
+      );
+    }
+  }
+
   try {
     await vscode.window.withProgress(
       {
@@ -417,6 +453,7 @@ async function mapFolder(depth: number = 0) {
           translations,
           "en",
           depth,
+          ig,
           (progressPercent) => {
             const increment = progressPercent - currentProgress;
             progress.report({ increment, message: "Generating hierarchy..." });

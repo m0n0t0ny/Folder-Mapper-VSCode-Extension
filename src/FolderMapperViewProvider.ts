@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { getIgnoreFiles } from "./extension";
 
@@ -88,19 +89,19 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public async updateView(
     selectedFolder?: string,
     outputFolder?: string,
-    ignoreFiles?: string[]
+    selectedIgnoreFile?: string
   ) {
-    if (selectedFolder) this._selectedFolder = selectedFolder;
-    if (outputFolder) this._outputFolder = outputFolder;
-
     if (this._view) {
       try {
-        const files = ignoreFiles || (await getIgnoreFiles());
+        const ignoreFiles = await getIgnoreFiles();
         await this._view.webview.postMessage({
           type: "updateUI",
-          selectedFolder: this._selectedFolder || "Not selected",
-          outputFolder: this._outputFolder || "Not selected",
-          ignoreFiles: files,
+          selectedFolder: selectedFolder || "Not selected",
+          outputFolder: outputFolder || "Not selected",
+          ignoreFiles: ignoreFiles,
+          selectedIgnoreFile: selectedIgnoreFile
+            ? path.basename(selectedIgnoreFile)
+            : "",
         });
       } catch (error) {
         console.error("Error updating view:", error);
@@ -297,27 +298,22 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ type: 'ignorePresets' });
           });
 
-          document.getElementById('ignoreFileSelect').addEventListener('mousedown', (event) => {
-            if (!ignoreFilesLoaded) {
-              event.preventDefault();
-              vscode.postMessage({ type: 'loadIgnoreFiles' });
-            }
-          });
-
           document.getElementById('ignoreFileSelect').addEventListener('change', (event) => {
             vscode.postMessage({ type: 'selectIgnoreFile', file: event.target.value });
           });
 
-          function updateIgnoreFileSelect(ignoreFiles) {
+          function updateIgnoreFileSelect(ignoreFiles, selectedIgnoreFile) {
             const ignoreFileSelect = document.getElementById('ignoreFileSelect');
             ignoreFileSelect.innerHTML = '<option value="">Select an ignore file</option>';
             ignoreFiles.forEach(file => {
               const option = document.createElement('option');
               option.value = file;
               option.textContent = file;
+              if (file === selectedIgnoreFile) {
+                option.selected = true;
+              }
               ignoreFileSelect.appendChild(option);
             });
-            ignoreFilesLoaded = true;
           }
 
           window.addEventListener('message', event => {
@@ -326,7 +322,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
               case 'updateUI':
                 document.getElementById('selectedFolder').textContent = message.selectedFolder;
                 document.getElementById('outputFolder').textContent = message.outputFolder;
-                updateIgnoreFileSelect(message.ignoreFiles);
+                updateIgnoreFileSelect(message.ignoreFiles, message.selectedIgnoreFile);
                 break;
               case 'updateUI':
                 document.getElementById('selectedFolder').textContent = message.selectedFolder || 'Not selected';
