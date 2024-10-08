@@ -1,6 +1,6 @@
-# Folder Mapper
+![](https://i.imgur.com/mbzKCXS.png)
 
-🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.2.31](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
+# Folder Mapper
 
 <p>
     <img src="https://i.imgur.com/vd2MP95.png" alt=".txt outcome of a mapped folder">
@@ -8,6 +8,8 @@
 </p>
 
 Folder Mapper is a tool to generate snapshots of a folder structure. It's the perfect tool for providing AI agents with a project overview or sharing your project's architecture with team members.
+
+🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.2.31](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
 
 ## Features
 
