@@ -2,6 +2,17 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.2.31] - 2024-10-07
+
+### Added
+
+- Ignore feature: Users can now select and use ignore files (like .gitignore) to exclude specific files or directories from mapping.
+- Dropdown menu in the UI for selecting ignore files.
+
+### Fixed
+
+- Resolved an issue where the ignore file feature was not working due to the wrong configuration of the .vscodeignore file.
+
 ## [1.1.21] - 2024-10-03
 
 ### Fixed

@@ -2,7 +2,7 @@
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
   "description": "Generate a hierarchical tree structure of your project folders and files.",
-  "version": "1.2.24",
+  "version": "1.2.31",
   "publisher": "m0n0t0ny",
   "license": "MIT",
   "sponsor": {
@@ -81,6 +81,11 @@
       {
         "command": "folderMapper.ignorePresets",
         "title": "Ignore Presets",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.selectIgnoreFile",
+        "title": "Select Ignore File",
         "category": "Folder Mapper"
       }
     ]

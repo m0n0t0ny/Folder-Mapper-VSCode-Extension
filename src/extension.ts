@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import ignore from "ignore";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -12,6 +13,8 @@ let statusBarItem: vscode.StatusBarItem;
 let provider: FolderMapperViewProvider;
 let isMappingInProgress = false;
 let shouldStopMapping = false;
+let selectedIgnoreFile: string | undefined;
+let context: vscode.ExtensionContext;
 
 // Function to update the user interface
 function updateUI() {
@@ -39,20 +42,27 @@ function getDefaultIgnoreFilePath(): string {
 // Function to select the folder to map
 async function selectFolder() {
   try {
+    const lastPath = context.globalState.get<string>("lastSelectedFolder");
     const folderUri = await vscode.window.showOpenDialog({
       canSelectFolders: true,
       canSelectMany: false,
       openLabel: "Select Folder to Map",
-      defaultUri: vscode.Uri.file(getDefaultFolderMapperDir()),
+      defaultUri: lastPath
+        ? vscode.Uri.file(lastPath)
+        : vscode.Uri.file(getDefaultFolderMapperDir()),
     });
 
     if (folderUri && folderUri.length > 0) {
       selectedFolder = folderUri[0];
+      await context.globalState.update(
+        "lastSelectedFolder",
+        selectedFolder.fsPath
+      );
       vscode.window.showInformationMessage(
         `Selected folder to map: ${selectedFolder.fsPath}`
       );
       updateStatusBar();
-      updateUI();
+      await provider.updateView(selectedFolder.fsPath, outputFolder);
     }
   } catch (error) {
     vscode.window.showErrorMessage(
@@ -79,7 +89,7 @@ async function selectOutputFolder() {
         `Output folder set to: ${outputFolder}`
       );
       updateStatusBar();
-      updateUI();
+      await provider.updateView(selectedFolder?.fsPath, outputFolder);
     }
   } catch (error) {
     vscode.window.showErrorMessage(
@@ -118,6 +128,43 @@ async function openIgnorePresetsDirectory() {
   }
 }
 
+// Funzione per ottenere la lista dei file ignore
+export async function getIgnoreFiles(): Promise<string[]> {
+  const ignorePresetsDir = path.join(
+    os.homedir(),
+    "Folder Mapper",
+    "Ignore Presets"
+  );
+  try {
+    if (!fs.existsSync(ignorePresetsDir)) {
+      await fs.promises.mkdir(ignorePresetsDir, { recursive: true });
+    }
+    const files = await fs.promises.readdir(ignorePresetsDir);
+    return files.filter((file) => file.endsWith("ignore"));
+  } catch (error) {
+    console.error(`Error reading ignore presets directory: ${error}`);
+    return [];
+  }
+}
+
+// Funzione per selezionare un file ignore
+async function selectIgnoreFile(file: string) {
+  if (file) {
+    selectedIgnoreFile = path.join(getIgnorePresetsDir(), file);
+    await context.globalState.update("lastSelectedIgnoreFile", file);
+    vscode.window.showInformationMessage(`Selected ignore file: ${file}`);
+  } else {
+    selectedIgnoreFile = undefined;
+    await context.globalState.update("lastSelectedIgnoreFile", undefined);
+    vscode.window.showInformationMessage("No ignore file selected");
+  }
+  await provider.updateView(
+    selectedFolder?.fsPath,
+    outputFolder,
+    selectedIgnoreFile
+  );
+}
+
 // Function to generate the folder hierarchy
 async function generateFileHierarchy(
   startPath: string,
@@ -125,6 +172,7 @@ async function generateFileHierarchy(
   translations: any,
   lang: string,
   depthLimit: number,
+  ig: ReturnType<typeof ignore> | undefined,
   progressCallback?: (progress: number) => void
 ): Promise<void> {
   try {
@@ -145,6 +193,15 @@ async function generateFileHierarchy(
 
     let totalItems = 0;
     let processedItems = 0;
+
+    let ig: ReturnType<typeof ignore> | undefined;
+    if (selectedIgnoreFile) {
+      const ignoreContent = await fs.promises.readFile(
+        selectedIgnoreFile,
+        "utf-8"
+      );
+      ig = ignore().add(ignoreContent);
+    }
 
     // Recursive function to write the folder hierarchy
     async function writeHierarchy(
@@ -181,11 +238,13 @@ async function generateFileHierarchy(
       });
 
       for (const [index, item] of items.entries()) {
-        if (shouldStopMapping) {
-          throw new Error("Mapping stopped by user");
+        const fullPath = path.join(currentPath, item);
+        const relativePath = path.relative(startPath, fullPath);
+
+        if (ig && ig.ignores(relativePath)) {
+          continue;
         }
 
-        const fullPath = path.join(currentPath, item);
         let isDirectory: boolean;
 
         try {
@@ -320,6 +379,29 @@ async function mapFolder(depth: number = 0) {
   isMappingInProgress = true;
   shouldStopMapping = false;
 
+  let ig: ReturnType<typeof ignore> | undefined;
+  if (selectedIgnoreFile) {
+    try {
+      const stats = await fs.promises.stat(selectedIgnoreFile);
+      if (stats.isFile()) {
+        const ignoreContent = await fs.promises.readFile(
+          selectedIgnoreFile,
+          "utf-8"
+        );
+        ig = ignore().add(ignoreContent);
+      } else {
+        vscode.window.showWarningMessage(
+          `Selected ignore file is not a valid file: ${selectedIgnoreFile}`
+        );
+      }
+    } catch (error) {
+      console.error(`Error reading ignore file: ${error}`);
+      vscode.window.showErrorMessage(
+        `Failed to read ignore file: ${selectedIgnoreFile}`
+      );
+    }
+  }
+
   try {
     await vscode.window.withProgress(
       {
@@ -371,6 +453,7 @@ async function mapFolder(depth: number = 0) {
           translations,
           "en",
           depth,
+          ig,
           (progressPercent) => {
             const increment = progressPercent - currentProgress;
             progress.report({ increment, message: "Generating hierarchy..." });
@@ -465,10 +548,10 @@ async function initializeFolderMapperConfig() {
 }
 
 // Extension activation function
-export async function activate(context: vscode.ExtensionContext) {
-  console.log('Congratulations, your extension "folder-mapper" is now active!');
-
+export async function activate(extensionContext: vscode.ExtensionContext) {
+  context = extensionContext;
   try {
+    console.log("Activating Folder Mapper extension...");
     await initializeFolderMapperConfig();
 
     provider = new FolderMapperViewProvider(context.extensionUri);
@@ -489,6 +572,13 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register extension commands
     context.subscriptions.push(
       vscode.commands.registerCommand(
+        "folderMapper.refreshIgnoreFiles",
+        async () => {
+          const ignoreFiles = await getIgnoreFiles();
+          provider.updateIgnoreFiles(ignoreFiles);
+        }
+      ),
+      vscode.commands.registerCommand(
         "folderMapper.selectFolder",
         selectFolder
       ),
@@ -508,14 +598,24 @@ export async function activate(context: vscode.ExtensionContext) {
         "folderMapper.ignorePresets",
         openIgnorePresetsDirectory
       ),
-      vscode.commands.registerCommand("folderMapper.stopMapping", stopMapping)
+      vscode.commands.registerCommand("folderMapper.stopMapping", stopMapping),
+      vscode.commands.registerCommand(
+        "folderMapper.selectIgnoreFile",
+        selectIgnoreFile
+      )
     );
 
-    updateStatusBar();
-    updateUI();
+    const lastSelectedFolder =
+      context.globalState.get<string>("lastSelectedFolder");
+    if (lastSelectedFolder) {
+      selectedFolder = vscode.Uri.file(lastSelectedFolder);
+      updateStatusBar();
+      await provider.updateView(selectedFolder.fsPath, outputFolder);
+    }
   } catch (error) {
+    console.error("Error activating Folder Mapper extension:", error);
     vscode.window.showErrorMessage(
-      `Error activating Folder Mapper extension: ${
+      `Failed to activate Folder Mapper: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
