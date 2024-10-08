@@ -2,7 +2,11 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+<<<<<<< HEAD
 ## [1.2.31] - 2024-10-07
+=======
+## [1.2.22] - 2024-10-07
+>>>>>>> 726e72f9ec6dd86916d0e451ba7a35487f227046
 
 ### Added
 
