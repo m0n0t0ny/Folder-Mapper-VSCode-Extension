@@ -1,5 +1,7 @@
 # Folder Mapper
 
+🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.2.31](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
+
 <p>
     <img src="https://i.imgur.com/vd2MP95.png" alt=".txt outcome of a mapped folder">
     <em>.txt outcome of a mapped folder</em>
