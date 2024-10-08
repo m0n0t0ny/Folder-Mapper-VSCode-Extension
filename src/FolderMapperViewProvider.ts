@@ -76,9 +76,25 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async restoreState() {
-    if (this._view) {
-      await this.updateView(this._selectedFolder, this._outputFolder);
-    }
+    const selectedFolder = (await vscode.commands.executeCommand(
+      "folderMapper.getSelectedFolder"
+    )) as string | undefined;
+    const outputFolder = (await vscode.commands.executeCommand(
+      "folderMapper.getOutputFolder"
+    )) as string | undefined;
+    const selectedIgnoreFile = (await vscode.commands.executeCommand(
+      "folderMapper.getSelectedIgnoreFile"
+    )) as string | undefined;
+    const depthLimit = (await vscode.commands.executeCommand(
+      "folderMapper.getDepthLimit"
+    )) as number;
+
+    await this.updateView(
+      selectedFolder,
+      outputFolder,
+      selectedIgnoreFile,
+      depthLimit
+    );
   }
 
   private async loadIgnoreFiles() {
@@ -89,7 +105,8 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   public async updateView(
     selectedFolder?: string,
     outputFolder?: string,
-    selectedIgnoreFile?: string
+    selectedIgnoreFile?: string,
+    depthLimit?: number
   ) {
     if (this._view) {
       try {
@@ -102,6 +119,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           selectedIgnoreFile: selectedIgnoreFile
             ? path.basename(selectedIgnoreFile)
             : "",
+          depthLimit: depthLimit !== undefined ? depthLimit : 0,
         });
       } catch (error) {
         console.error("Error updating view:", error);
@@ -316,18 +334,18 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             });
           }
 
+          function updateUI(message) {
+            document.getElementById('selectedFolder').textContent = message.selectedFolder;
+            document.getElementById('outputFolder').textContent = message.outputFolder;
+            document.getElementById('depthLimit').value = message.depthLimit;
+            updateIgnoreFileSelect(message.ignoreFiles, message.selectedIgnoreFile);
+          }
+
           window.addEventListener('message', event => {
             const message = event.data;
             switch (message.type) {
               case 'updateUI':
-                document.getElementById('selectedFolder').textContent = message.selectedFolder;
-                document.getElementById('outputFolder').textContent = message.outputFolder;
-                updateIgnoreFileSelect(message.ignoreFiles, message.selectedIgnoreFile);
-                break;
-              case 'updateUI':
-                document.getElementById('selectedFolder').textContent = message.selectedFolder || 'Not selected';
-                document.getElementById('outputFolder').textContent = message.outputFolder || 'Not selected';
-                updateIgnoreFileSelect(message.ignoreFiles);
+                updateUI(message);
                 break;
               case 'updateIgnoreFiles':
                 updateIgnoreFileSelect(message.ignoreFiles);
