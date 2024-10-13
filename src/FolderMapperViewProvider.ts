@@ -76,18 +76,18 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async restoreState() {
-    const selectedFolder = (await vscode.commands.executeCommand(
-      "folderMapper.getSelectedFolder"
-    )) as string | undefined;
-    const outputFolder = (await vscode.commands.executeCommand(
-      "folderMapper.getOutputFolder"
-    )) as string | undefined;
-    const selectedIgnoreFile = (await vscode.commands.executeCommand(
-      "folderMapper.getSelectedIgnoreFile"
-    )) as string | undefined;
-    const depthLimit = (await vscode.commands.executeCommand(
+    const selectedFolder = await vscode.commands.executeCommand<
+      string | undefined
+    >("folderMapper.getSelectedFolder");
+    const outputFolder = await vscode.commands.executeCommand<
+      string | undefined
+    >("folderMapper.getOutputFolder");
+    const selectedIgnoreFile = await vscode.commands.executeCommand<
+      string | undefined
+    >("folderMapper.getSelectedIgnoreFile");
+    const depthLimit = await vscode.commands.executeCommand<number>(
       "folderMapper.getDepthLimit"
-    )) as number;
+    );
 
     await this.updateView(
       selectedFolder,

@@ -602,6 +602,21 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
       vscode.commands.registerCommand(
         "folderMapper.selectIgnoreFile",
         selectIgnoreFile
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.getSelectedFolder",
+        () => selectedFolder?.fsPath
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.getOutputFolder",
+        () => outputFolder
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.getSelectedIgnoreFile",
+        () => selectedIgnoreFile
+      ),
+      vscode.commands.registerCommand("folderMapper.getDepthLimit", () =>
+        context.workspaceState.get("depthLimit", 0)
       )
     );
 
