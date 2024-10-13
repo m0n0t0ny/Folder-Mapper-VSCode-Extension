@@ -257,12 +257,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             margin-bottom: 10px;
             gap: 10px;
           }
-          // @media (max-width: 300px) {
-          // .buttons-group button {
-          //     width: 100%;
-          //     min-height: 50px;
-          //   }
-          // }
           #stopMapping {
             background-color: var(--vscode-errorForeground);
             display: none;
