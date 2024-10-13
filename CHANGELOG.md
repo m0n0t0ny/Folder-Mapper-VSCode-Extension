@@ -2,6 +2,13 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.2.33] - 2024-10-13
+
+### Fixed
+
+- Resolved an issue where some commands were not properly registered, causing errors like "command 'folderMapper.getSelectedFolder' not found".
+- Improved the extension's activation process to ensure all necessary commands are available.
+
 ## [1.2.22] - 2024-10-07
 
 ### Added
