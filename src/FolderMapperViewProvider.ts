@@ -110,16 +110,21 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     ignoreFiles?: string[]
   ) {
     if (this._view) {
-      const selectedIgnoreFileName = selectedIgnoreFile
-        ? path.basename(selectedIgnoreFile)
-        : "";
-
+      console.log("Updating view with:", {
+        selectedFolder,
+        outputFolder,
+        selectedIgnoreFile,
+        depthLimit,
+        estimateTokenCost,
+        ignoreFiles
+      });
+  
       await this._view.webview.postMessage({
         type: "updateUI",
         selectedFolder: selectedFolder || "Not selected",
         outputFolder: outputFolder || "Not selected",
         ignoreFiles: ignoreFiles || [],
-        selectedIgnoreFile: selectedIgnoreFileName,
+        selectedIgnoreFile: selectedIgnoreFile ? path.basename(selectedIgnoreFile) : "",
         depthLimit: depthLimit !== undefined ? depthLimit : 0,
         estimateTokenCost: estimateTokenCost || false,
       });
@@ -369,7 +374,13 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
               file: selectedFile 
             });
           });
-          document.getElementById('estimateTokenCost').addEventListener('change', (event) => sendMessage('toggleEstimateTokenCost', { value: event.target.checked }));
+          document.getElementById('estimateTokenCost').addEventListener('change', (event) => {
+            console.log("Estimate Token Cost toggled:", event.target.checked);
+            vscode.postMessage({ 
+              type: 'toggleEstimateTokenCost', 
+              value: event.target.checked 
+            });
+          });
 
           function updateUI(message) {
             console.log("Updating UI with:", message);

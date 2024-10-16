@@ -156,7 +156,7 @@ async function selectIgnoreFile(file: string) {
     await context.globalState.update("lastSelectedIgnoreFile", undefined);
     vscode.window.showInformationMessage("No ignore file selected");
   }
-  
+
   // Update the UI immediately after selection
   await updateUIAfterIgnoreFileSelection();
 }
@@ -346,15 +346,24 @@ async function countItems(
 }
 
 // Function to toggle token cost estimation
-function toggleEstimateTokenCost(value: boolean) {
+async function toggleEstimateTokenCost(value: boolean) {
   estimateTokenCostEnabled = value;
-  context.workspaceState.update("estimateTokenCost", value);
-  provider.updateView(
+  await context.workspaceState.update("estimateTokenCost", value);
+  console.log(`Estimate Token Cost toggled to: ${value}`);
+
+  // Update the UI immediately after toggling
+  await updateUIAfterStateChange();
+}
+
+async function updateUIAfterStateChange() {
+  const ignoreFiles = await getIgnoreFiles();
+  await provider.updateView(
     selectedFolder?.fsPath,
     outputFolder,
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
-    estimateTokenCostEnabled
+    estimateTokenCostEnabled,
+    ignoreFiles
   );
 }
 
@@ -488,9 +497,8 @@ async function mapFolder(depth: number = 0) {
         }
       }
     );
-    
-    await updateUIAfterMapping();
 
+    await updateUIAfterMapping();
   } catch (error) {
     if (error instanceof Error && error.message === "Mapping stopped by user") {
       vscode.window.showInformationMessage("Mapping stopped by user");
