@@ -49,6 +49,11 @@
           "type": "webview",
           "id": "folderMapper-view",
           "name": "Folder Mapper"
+        },
+        {
+          "type": "webview",
+          "id": "folderMapper-guide",
+          "name": "Guide"
         }
       ]
     },
@@ -75,17 +80,22 @@
       },
       {
         "command": "folderMapper.mappedFolders",
-        "title": "Mapped Folders",
+        "title": "Open Mapped Folders",
         "category": "Folder Mapper"
       },
       {
         "command": "folderMapper.ignorePresets",
-        "title": "Ignore Presets",
+        "title": "Open Ignore Presets",
         "category": "Folder Mapper"
       },
       {
         "command": "folderMapper.selectIgnoreFile",
         "title": "Select Ignore File",
+        "category": "Folder Mapper"
+      },
+      {
+        "command": "folderMapper.toggleEstimateTokenCost",
+        "title": "Toggle Estimate Token Cost",
         "category": "Folder Mapper"
       }
     ]
