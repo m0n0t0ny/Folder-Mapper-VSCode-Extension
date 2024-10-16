@@ -2,6 +2,23 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.3.0] - 2024-10-17
+
+### Added
+- Token cost estimation feature for AI-assisted workflows
+- New "Guide" tab with detailed explanations of each feature
+- Index with anchor links in the Guide for easy navigation
+
+### Changed
+- Improved UI layout and responsiveness
+- Enhanced error handling and debugging capabilities
+- Updated the context of the "Select Folder to Map" function to better explain its purpose in AI workflows
+
+### Fixed
+- Resolved issues with UI not updating correctly on startup
+- Fixed non-functioning buttons and dropdown menus
+- Improved communication between webview and extension
+
 ## [1.2.33] - 2024-10-13
 
 ### Fixed

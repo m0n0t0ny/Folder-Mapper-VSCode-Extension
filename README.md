@@ -13,7 +13,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 
 ## Features
 
-- 📊 Text-Based Mapping: Generate a comprehensive text-based map of your folder structure.
+- 📊 Text-Based Mapping: Generate a detailed text-based map of your folder structure.
 - 🔍 Depth Control: Customize the mapping depth to focus on specific levels of your project.
 - 🚫 Smart Exclusions: Utilize ignore files (.gitignore, .vscignore, .foldermapperignore) to exclude specific files or directories from mapping.
 - 🖥️ User-Friendly Interface: Navigate and operate the extension effortlessly through a sleek sidebar interface.
@@ -22,6 +22,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 - 🎨 Theme-Aware Design: Experience a seamless look with UI that automatically adapts to your VS Code theme.
 - ⚡ Efficient Performance: Quickly generate maps even for large and complex project structures.
 - 💡 Token Cost Estimation: Get an estimate of the token cost for the generated folder structure (useful for AI interactions).
+- 📘 Integrated Guide: Access a comprehensive guide explaining each feature and its context within the extension.
 
 ## How to Use
 
@@ -32,6 +33,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 5. (Optional) Select an ignore file from the dropdown menu to exclude specific files or directories.
 6. (Optional) Toggle the "Estimate Token Cost" option if you want to see the estimated token cost of the generated structure.
 7. Click "Start Mapping" to generate the folder structure map.
+8. Refer to the "Guide" tab for detailed explanations of each feature.
 
 Folder Mapper in action:
 ![Folder Mapper Demo](https://i.imgur.com/ResAvIt.gif)
@@ -48,10 +50,12 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## What's New in 1.2.33
+## New in Version 1.3.0
 
-- Resolved an issue where some commands were not properly registered, causing errors like "command 'folderMapper.getSelectedFolder' not found".
-- Improved the extension's activation process to ensure all necessary commands are available.
+- Added a new "Guide" tab with comprehensive explanations of each feature and its context.
+- Introduced token cost estimation for AI-assisted workflows.
+- Improved UI responsiveness and error handling.
+- Enhanced the overall user experience with better feedback and clearer instructions.
 
 ## License
 

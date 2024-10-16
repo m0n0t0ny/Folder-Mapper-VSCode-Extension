@@ -202,6 +202,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             font-size: var(--vscode-font-size);
             font-weight: var(--vscode-font-weight);
           }
+          #startMapping {
+          
+          }
           #ignoreFileSelect {
             padding: 6px 0px;
           }
@@ -234,9 +237,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             width: 100%;
             height: 5px;
             background-color: var(--vscode-input-background);
-            margin-top: 10px;
-            display: none;
+            margin-bottom: 10px;
             border-radius: 2px;
+            overflow: hidden;
           }
           #progressBar .progress {
             height: 100%;
@@ -339,6 +342,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         </div>
         <button id="startMapping">Start Mapping</button>
         <button id="stopMapping">Stop Mapping</button>
+        <div id="progressBar"><div class="progress"></div></div>
         <div class="buttons-group">
           <button id="mappedFolders">Mapped Folders</button>
           <button id="ignorePresets">Ignore Presets</button>
@@ -347,7 +351,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <label for="tokenCostEstimate">Estimated Token Cost:</label>
           <div id="tokenCostEstimate"></div>
         </div>
-        <div id="progressBar"><div class="progress"></div></div>
 
         <script>
           const vscode = acquireVsCodeApi();
@@ -419,10 +422,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
               case 'updateProgress':
                 const progressBar = document.querySelector('#progressBar .progress');
                 progressBar.style.width = \`\${message.progress}%\`;
-                document.getElementById('progressBar').style.display = 'block';
                 if (message.progress >= 100) {
                   setTimeout(() => {
-                    document.getElementById('progressBar').style.display = 'none';
+                    progressBar.style.width = '0%';
                     document.getElementById('stopMapping').style.display = 'none';
                     document.getElementById('startMapping').style.display = 'block';
                   }, 1000);
@@ -431,7 +433,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
               case 'resetProgress':
                 const progressBarReset = document.querySelector('#progressBar .progress');
                 progressBarReset.style.width = '0%';
-                document.getElementById('progressBar').style.display = 'none';
                 document.getElementById('stopMapping').style.display = 'none';
                 document.getElementById('startMapping').style.display = 'block';
                 break;

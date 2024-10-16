@@ -2,7 +2,7 @@
   "name": "folder-mapper",
   "displayName": "Folder Mapper",
   "description": "Generate a hierarchical tree structure of your project folders and files.",
-  "version": "1.2.33",
+  "version": "1.3.0",
   "publisher": "m0n0t0ny",
   "license": "MIT",
   "sponsor": {
@@ -25,7 +25,7 @@
     "tree",
     "generator",
     "hierarchy",
-    "directory"
+    "ai"
   ],
   "icon": "images/folder-mapper-icon.png",
   "galleryBanner": {
