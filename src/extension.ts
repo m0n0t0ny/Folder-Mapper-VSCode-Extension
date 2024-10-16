@@ -146,7 +146,6 @@ export async function getIgnoreFiles(): Promise<string[]> {
   }
 }
 
-// Function to select an ignore file
 async function selectIgnoreFile(file: string) {
   if (file) {
     selectedIgnoreFile = path.join(getIgnorePresetsDir(), file);
@@ -157,10 +156,20 @@ async function selectIgnoreFile(file: string) {
     await context.globalState.update("lastSelectedIgnoreFile", undefined);
     vscode.window.showInformationMessage("No ignore file selected");
   }
+  
+  // Update the UI immediately after selection
+  await updateUIAfterIgnoreFileSelection();
+}
+
+async function updateUIAfterIgnoreFileSelection() {
+  const ignoreFiles = await getIgnoreFiles();
   await provider.updateView(
     selectedFolder?.fsPath,
     outputFolder,
-    selectedIgnoreFile
+    selectedIgnoreFile,
+    context.workspaceState.get("depthLimit", 0),
+    estimateTokenCostEnabled,
+    ignoreFiles
   );
 }
 

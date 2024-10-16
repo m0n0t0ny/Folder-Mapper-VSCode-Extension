@@ -110,14 +110,16 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     ignoreFiles?: string[]
   ) {
     if (this._view) {
+      const selectedIgnoreFileName = selectedIgnoreFile
+        ? path.basename(selectedIgnoreFile)
+        : "";
+
       await this._view.webview.postMessage({
         type: "updateUI",
         selectedFolder: selectedFolder || "Not selected",
         outputFolder: outputFolder || "Not selected",
         ignoreFiles: ignoreFiles || [],
-        selectedIgnoreFile: selectedIgnoreFile
-          ? path.basename(selectedIgnoreFile)
-          : "",
+        selectedIgnoreFile: selectedIgnoreFileName,
         depthLimit: depthLimit !== undefined ? depthLimit : 0,
         estimateTokenCost: estimateTokenCost || false,
       });
@@ -359,7 +361,14 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           document.getElementById('stopMapping').addEventListener('click', () => sendMessage('stopMapping'));
           document.getElementById('mappedFolders').addEventListener('click', () => sendMessage('mappedFolders'));
           document.getElementById('ignorePresets').addEventListener('click', () => sendMessage('ignorePresets'));
-          document.getElementById('ignoreFileSelect').addEventListener('change', (event) => sendMessage('selectIgnoreFile', { file: event.target.value }));
+          document.getElementById('ignoreFileSelect').addEventListener('change', (event) => {
+            const selectedFile = event.target.value;
+            console.log("Ignore file selected:", selectedFile);
+            vscode.postMessage({ 
+              type: 'selectIgnoreFile', 
+              file: selectedFile 
+            });
+          });
           document.getElementById('estimateTokenCost').addEventListener('change', (event) => sendMessage('toggleEstimateTokenCost', { value: event.target.checked }));
 
           function updateUI(message) {
