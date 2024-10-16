@@ -3,8 +3,10 @@ import ignore from "ignore";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { defaultIgnoreContent } from "./defaultIgnoreContent";
+import { FolderMapperGuideProvider } from "./FolderMapperGuideProvider";
 import { FolderMapperViewProvider } from "./FolderMapperViewProvider";
+import { defaultIgnoreContent } from "./defaultIgnoreContent";
+import { estimateTokenCost } from "./estimateTokenCost";
 
 // Global variables to manage extension state
 let selectedFolder: vscode.Uri | undefined;
@@ -15,6 +17,7 @@ let isMappingInProgress = false;
 let shouldStopMapping = false;
 let selectedIgnoreFile: string | undefined;
 let context: vscode.ExtensionContext;
+let estimateTokenCostEnabled = false;
 
 // Function to update the user interface
 function updateUI() {
@@ -128,13 +131,9 @@ async function openIgnorePresetsDirectory() {
   }
 }
 
-// Funzione per ottenere la lista dei file ignore
+// Function to get the list of ignore files
 export async function getIgnoreFiles(): Promise<string[]> {
-  const ignorePresetsDir = path.join(
-    os.homedir(),
-    "Folder Mapper",
-    "Ignore Presets"
-  );
+  const ignorePresetsDir = getIgnorePresetsDir();
   try {
     if (!fs.existsSync(ignorePresetsDir)) {
       await fs.promises.mkdir(ignorePresetsDir, { recursive: true });
@@ -147,7 +146,7 @@ export async function getIgnoreFiles(): Promise<string[]> {
   }
 }
 
-// Funzione per selezionare un file ignore
+// Function to select an ignore file
 async function selectIgnoreFile(file: string) {
   if (file) {
     selectedIgnoreFile = path.join(getIgnorePresetsDir(), file);
@@ -193,15 +192,6 @@ async function generateFileHierarchy(
 
     let totalItems = 0;
     let processedItems = 0;
-
-    let ig: ReturnType<typeof ignore> | undefined;
-    if (selectedIgnoreFile) {
-      const ignoreContent = await fs.promises.readFile(
-        selectedIgnoreFile,
-        "utf-8"
-      );
-      ig = ignore().add(ignoreContent);
-    }
 
     // Recursive function to write the folder hierarchy
     async function writeHierarchy(
@@ -346,6 +336,19 @@ async function countItems(
   return count;
 }
 
+// Function to toggle token cost estimation
+function toggleEstimateTokenCost(value: boolean) {
+  estimateTokenCostEnabled = value;
+  context.workspaceState.update("estimateTokenCost", value);
+  provider.updateView(
+    selectedFolder?.fsPath,
+    outputFolder,
+    selectedIgnoreFile,
+    context.workspaceState.get("depthLimit", 0),
+    estimateTokenCostEnabled
+  );
+}
+
 // Function to map the folder structure
 async function mapFolder(depth: number = 0) {
   if (!selectedFolder) {
@@ -468,8 +471,17 @@ async function mapFolder(depth: number = 0) {
         );
         const doc = await vscode.workspace.openTextDocument(outputFilePath);
         await vscode.window.showTextDocument(doc);
+
+        // Estimate token cost if enabled
+        if (estimateTokenCostEnabled) {
+          const tokenCost = await estimateTokenCost(outputFilePath);
+          provider.updateTokenCost(tokenCost);
+        }
       }
     );
+    
+    await updateUIAfterMapping();
+
   } catch (error) {
     if (error instanceof Error && error.message === "Mapping stopped by user") {
       vscode.window.showInformationMessage("Mapping stopped by user");
@@ -484,7 +496,22 @@ async function mapFolder(depth: number = 0) {
     isMappingInProgress = false;
     shouldStopMapping = false;
     provider.resetProgress();
+
+    // Ensure UI is updated even if an error occurred
+    await updateUIAfterMapping();
   }
+}
+
+async function updateUIAfterMapping() {
+  const ignoreFiles = await getIgnoreFiles();
+  await provider.updateView(
+    selectedFolder?.fsPath,
+    outputFolder,
+    selectedIgnoreFile,
+    context.workspaceState.get("depthLimit", 0),
+    estimateTokenCostEnabled,
+    ignoreFiles
+  );
 }
 
 // Function to stop the mapping process
@@ -547,7 +574,6 @@ async function initializeFolderMapperConfig() {
   }
 }
 
-// Extension activation function
 export async function activate(extensionContext: vscode.ExtensionContext) {
   context = extensionContext;
   try {
@@ -555,11 +581,16 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     await initializeFolderMapperConfig();
 
     provider = new FolderMapperViewProvider(context.extensionUri);
+    const guideProvider = new FolderMapperGuideProvider(context.extensionUri);
 
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
         FolderMapperViewProvider.viewType,
         provider
+      ),
+      vscode.window.registerWebviewViewProvider(
+        FolderMapperGuideProvider.viewType,
+        guideProvider
       )
     );
 
@@ -570,63 +601,13 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     context.subscriptions.push(statusBarItem);
 
     // Register extension commands
-    context.subscriptions.push(
-      vscode.commands.registerCommand(
-        "folderMapper.refreshIgnoreFiles",
-        async () => {
-          const ignoreFiles = await getIgnoreFiles();
-          provider.updateIgnoreFiles(ignoreFiles);
-        }
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.selectFolder",
-        selectFolder
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.mapFolder",
-        (depth: number = 0) => mapFolder(depth)
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.selectOutputFolder",
-        selectOutputFolder
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.mappedFolders",
-        openFolderMapperDirectory
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.ignorePresets",
-        openIgnorePresetsDirectory
-      ),
-      vscode.commands.registerCommand("folderMapper.stopMapping", stopMapping),
-      vscode.commands.registerCommand(
-        "folderMapper.selectIgnoreFile",
-        selectIgnoreFile
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.getSelectedFolder",
-        () => selectedFolder?.fsPath
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.getOutputFolder",
-        () => outputFolder
-      ),
-      vscode.commands.registerCommand(
-        "folderMapper.getSelectedIgnoreFile",
-        () => selectedIgnoreFile
-      ),
-      vscode.commands.registerCommand("folderMapper.getDepthLimit", () =>
-        context.workspaceState.get("depthLimit", 0)
-      )
-    );
+    registerCommands();
 
-    const lastSelectedFolder =
-      context.globalState.get<string>("lastSelectedFolder");
-    if (lastSelectedFolder) {
-      selectedFolder = vscode.Uri.file(lastSelectedFolder);
-      updateStatusBar();
-      await provider.updateView(selectedFolder.fsPath, outputFolder);
-    }
+    // Initialize state
+    await initializeState();
+
+    // Update the view with the initial state
+    await updateInitialView();
   } catch (error) {
     console.error("Error activating Folder Mapper extension:", error);
     vscode.window.showErrorMessage(
@@ -635,6 +616,69 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
       }`
     );
   }
+}
+
+function registerCommands() {
+  const commands = [
+    {
+      name: "refreshIgnoreFiles",
+      handler: async () => {
+        const ignoreFiles = await getIgnoreFiles();
+        provider.updateIgnoreFiles(ignoreFiles);
+      },
+    },
+    { name: "selectFolder", handler: selectFolder },
+    { name: "mapFolder", handler: (depth: number = 0) => mapFolder(depth) },
+    { name: "selectOutputFolder", handler: selectOutputFolder },
+    { name: "mappedFolders", handler: openFolderMapperDirectory },
+    { name: "ignorePresets", handler: openIgnorePresetsDirectory },
+    { name: "stopMapping", handler: stopMapping },
+    { name: "selectIgnoreFile", handler: selectIgnoreFile },
+    { name: "getSelectedFolder", handler: () => selectedFolder?.fsPath },
+    { name: "getOutputFolder", handler: () => outputFolder },
+    { name: "getSelectedIgnoreFile", handler: () => selectedIgnoreFile },
+    {
+      name: "getDepthLimit",
+      handler: () => context.workspaceState.get("depthLimit", 0),
+    },
+    { name: "toggleEstimateTokenCost", handler: toggleEstimateTokenCost },
+    { name: "getEstimateTokenCost", handler: () => estimateTokenCostEnabled },
+  ];
+
+  commands.forEach((cmd) => {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(`folderMapper.${cmd.name}`, cmd.handler)
+    );
+  });
+}
+
+async function initializeState() {
+  const lastSelectedFolder =
+    context.globalState.get<string>("lastSelectedFolder");
+  if (lastSelectedFolder) {
+    selectedFolder = vscode.Uri.file(lastSelectedFolder);
+    updateStatusBar();
+  }
+
+  outputFolder =
+    context.globalState.get<string>("outputFolder") ||
+    getDefaultFolderMapperDir();
+  selectedIgnoreFile = context.globalState.get<string>("selectedIgnoreFile");
+  estimateTokenCostEnabled = context.workspaceState.get(
+    "estimateTokenCost",
+    false
+  );
+}
+
+async function updateInitialView() {
+  await provider.updateView(
+    selectedFolder?.fsPath,
+    outputFolder,
+    selectedIgnoreFile,
+    context.workspaceState.get("depthLimit", 0),
+    estimateTokenCostEnabled,
+    await getIgnoreFiles()
+  );
 }
 
 // Extension deactivation function
