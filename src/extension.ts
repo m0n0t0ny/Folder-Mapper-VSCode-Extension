@@ -18,6 +18,7 @@ let shouldStopMapping = false;
 let selectedIgnoreFile: string | undefined;
 let context: vscode.ExtensionContext;
 let estimateTokenCostEnabled = false;
+let aiOptimized = false;
 
 // Function to update the user interface
 function updateUI() {
@@ -173,6 +174,19 @@ async function updateUIAfterIgnoreFileSelection() {
   );
 }
 
+// Function to toggle AI-optimized mode
+async function toggleAiOptimized(value: boolean) {
+  aiOptimized = value;
+  await context.workspaceState.update("aiOptimized", value);
+  console.log(`AI-optimized mode toggled to: ${value}`);
+  await updateUIAfterStateChange();
+}
+
+// Function to get the current AI-optimized state
+function getAiOptimized(): boolean {
+  return aiOptimized;
+}
+
 // Function to generate the folder hierarchy
 async function generateFileHierarchy(
   startPath: string,
@@ -253,11 +267,26 @@ async function generateFileHierarchy(
       }
 
       const isLast = index === items.length - 1;
-      const linePrefix = isLast ? "└── " : "├── ";
-      const newPrefix = prefix + (isLast ? "    " : "│   ");
 
-      // Write the current item to the output
-      appendContent(`${prefix}${linePrefix}${item}${isDirectory ? "/" : ""}\n`);
+      if (aiOptimized) {
+        // AI-optimized structure
+        const pathParts = relativePath.split(path.sep);
+        if (currentDepth < pathParts.length) {
+          appendContent(
+            `${pathParts.slice(0, currentDepth + 1).join("/")}${
+              isDirectory ? "/" : ""
+            }\n`
+          );
+        }
+      } else {
+        // Standard human-readable structure
+        const linePrefix = isLast ? "└── " : "├── ";
+        const newPrefix = prefix + (isLast ? "    " : "│   ");
+        appendContent(
+          `${prefix}${linePrefix}${item}${isDirectory ? "/" : ""}\n`
+        );
+      }
+
       processedItems++;
 
       // Update progress
@@ -266,7 +295,15 @@ async function generateFileHierarchy(
 
       // If it's a directory and we haven't reached the depth limit, continue recursively
       if (isDirectory && (depthLimit === 0 || currentDepth < depthLimit - 1)) {
-        await writeHierarchy(fullPath, newPrefix, currentDepth + 1);
+        if (aiOptimized) {
+          await writeHierarchy(fullPath, "", currentDepth + 1);
+        } else {
+          await writeHierarchy(
+            fullPath,
+            prefix + (isLast ? "    " : "│   "),
+            currentDepth + 1
+          );
+        }
       }
     }
   }
@@ -306,7 +343,11 @@ async function countItems(
       const fullPath = path.join(dir, item);
       const stats = await fs.promises.stat(fullPath);
       if (stats.isDirectory()) {
-        count += await countItems(fullPath, depthLimit, currentDepth + 1);
+        if (depthLimit === 0 || currentDepth < depthLimit - 1) {
+          count += await countItems(fullPath, depthLimit, currentDepth + 1);
+        } else {
+          count++; // Count the directory itself but don't recurse
+        }
       } else {
         count++;
       }
@@ -330,6 +371,7 @@ async function toggleEstimateTokenCost(value: boolean) {
   await updateUIAfterStateChange();
 }
 
+// Update UI after a state change function
 async function updateUIAfterStateChange() {
   const ignoreFiles = await getIgnoreFiles();
   await provider.updateView(
@@ -338,7 +380,8 @@ async function updateUIAfterStateChange() {
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
     estimateTokenCostEnabled,
-    ignoreFiles
+    ignoreFiles,
+    aiOptimized
   );
 }
 
@@ -562,7 +605,6 @@ async function mapFolder(depth: number = 0) {
     );
 
     endMappingProcess(true); // Successful completion
-    await updateUIAfterMapping();
   } catch (error) {
     if (error instanceof Error && error.message === "Mapping stopped by user") {
       vscode.window.showInformationMessage("Mapping stopped by user");
@@ -581,6 +623,7 @@ async function mapFolder(depth: number = 0) {
   }
 }
 
+// Update the updateUIAfterMapping function
 async function updateUIAfterMapping() {
   const ignoreFiles = await getIgnoreFiles();
   await provider.updateView(
@@ -589,7 +632,8 @@ async function updateUIAfterMapping() {
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
     estimateTokenCostEnabled,
-    ignoreFiles
+    ignoreFiles,
+    aiOptimized
   );
 }
 
@@ -679,6 +723,17 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     );
     context.subscriptions.push(statusBarItem);
 
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "folderMapper.toggleAiOptimized",
+        toggleAiOptimized
+      ),
+      vscode.commands.registerCommand(
+        "folderMapper.getAiOptimized",
+        getAiOptimized
+      )
+    );
+
     // Register extension commands
     registerCommands();
 
@@ -747,6 +802,7 @@ async function initializeState() {
     "estimateTokenCost",
     false
   );
+  aiOptimized = context.workspaceState.get("aiOptimized", false);
 }
 
 async function updateInitialView() {
@@ -756,7 +812,8 @@ async function updateInitialView() {
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
     estimateTokenCostEnabled,
-    await getIgnoreFiles()
+    await getIgnoreFiles(),
+    aiOptimized
   );
 }
 

@@ -35,6 +35,7 @@ export class FolderMapperGuideProvider implements vscode.WebviewViewProvider {
                         line-height: 1.6;
                     }
                     h1 {
+                        font-size: 20px;
                         margin-top: 0px !important;
                         padding-top: 0px !important;
                     }
