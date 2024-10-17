@@ -2,6 +2,12 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.5.0] - 2024-10-19
+
+### Added
+
+- New AI-optimized structure option for more efficient token usage with AI language models
+
 ## [1.4.0] - 2024-10-18
 
 ### Added

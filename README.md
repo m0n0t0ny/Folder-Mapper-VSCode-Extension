@@ -9,7 +9,7 @@
 
 Folder Mapper is a tool to generate snapshots of a folder structure. It's the perfect tool for providing AI agents with a project overview or sharing your project's architecture with team members.
 
-🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.4.0](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
+🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.5.0](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
 
 ## Features
 
@@ -24,6 +24,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 - 💡 Token Cost Estimation: Get an estimate of the token cost for the generated folder structure (useful for AI interactions).
 - 📘 Integrated Guide: Access a comprehensive guide explaining each feature and its context within the extension.
 - 🕰️ Improved File Naming: Output files now include timestamps for better organization and version control.
+- 🤖 AI-Optimized Structure: Generate a more compact folder structure optimized for AI language models, reducing token usage.
 
 ## How to Use
 
@@ -33,8 +34,9 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 4. Set the "Depth Limit" if you want to restrict the mapping depth (0 for unlimited).
 5. (Optional) Select an ignore file from the dropdown menu to exclude specific files or directories.
 6. (Optional) Toggle the "Estimate Token Cost" option if you want to see the estimated token cost of the generated structure.
-7. Click "Start Mapping" to generate the folder structure map.
-8. Refer to the "Guide" tab for detailed explanations of each feature.
+7. (Optional) Toggle the "AI-Optimized Structure" option for a more compact output suitable for AI language models.
+8. Click "Start Mapping" to generate the folder structure map.
+9. Refer to the "Guide" tab for detailed explanations of each feature.
 
 Folder Mapper in action:
 ![Folder Mapper Demo](https://i.imgur.com/ResAvIt.gif)
@@ -51,11 +53,9 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## New in Version 1.4.0
+## New in Version 1.5.0
 
-- Improved file naming: Output files now take their name by the mapped folder and include timestamps (YYYY-MM-DD_HH-MM) for better organization.
-- Enhanced performance and readability of the folder hierarchy generation process.
-- Consistent file naming between initial save and "Save with new name" option.
+- Added AI-optimized structure option for more efficient token usage with AI language models
 
 ## License
 
