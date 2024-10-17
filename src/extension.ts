@@ -367,6 +367,13 @@ async function updateUIAfterStateChange() {
   );
 }
 
+// New function to handle the end of mapping process
+function endMappingProcess(success: boolean = true) {
+  isMappingInProgress = false;
+  shouldStopMapping = false;
+  provider.endMapping(success);
+}
+
 // Function to map the folder structure
 async function mapFolder(depth: number = 0) {
   if (!selectedFolder) {
@@ -394,7 +401,6 @@ async function mapFolder(depth: number = 0) {
     },
   };
 
-  provider.resetProgress();
   provider.startMapping();
   console.log("startMapping called");
   isMappingInProgress = true;
@@ -479,11 +485,9 @@ async function mapFolder(depth: number = 0) {
             const increment = progressPercent - currentProgress;
             progress.report({ increment, message: "Generating hierarchy..." });
             currentProgress = progressPercent;
-            provider.updateProgress(progressPercent);
           }
         );
 
-        provider.updateProgress(100);
         vscode.window.showInformationMessage(
           `Folder structure mapped successfully. Output file: ${outputFilePath}`
         );
@@ -498,22 +502,21 @@ async function mapFolder(depth: number = 0) {
       }
     );
 
+    endMappingProcess(true); // Successful completion
     await updateUIAfterMapping();
   } catch (error) {
     if (error instanceof Error && error.message === "Mapping stopped by user") {
       vscode.window.showInformationMessage("Mapping stopped by user");
+      endMappingProcess(false); // Stopped by user
     } else {
       vscode.window.showErrorMessage(
         `Error mapping folder: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
+      endMappingProcess(false); // Stopped due to error
     }
   } finally {
-    isMappingInProgress = false;
-    shouldStopMapping = false;
-    provider.resetProgress();
-
     // Ensure UI is updated even if an error occurred
     await updateUIAfterMapping();
   }

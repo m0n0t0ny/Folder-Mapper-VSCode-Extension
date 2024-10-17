@@ -116,15 +116,17 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         selectedIgnoreFile,
         depthLimit,
         estimateTokenCost,
-        ignoreFiles
+        ignoreFiles,
       });
-  
+
       await this._view.webview.postMessage({
         type: "updateUI",
         selectedFolder: selectedFolder || "Not selected",
         outputFolder: outputFolder || "Not selected",
         ignoreFiles: ignoreFiles || [],
-        selectedIgnoreFile: selectedIgnoreFile ? path.basename(selectedIgnoreFile) : "",
+        selectedIgnoreFile: selectedIgnoreFile
+          ? path.basename(selectedIgnoreFile)
+          : "",
         depthLimit: depthLimit !== undefined ? depthLimit : 0,
         estimateTokenCost: estimateTokenCost || false,
       });
@@ -152,6 +154,15 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     if (this._view) {
       this._view.webview.postMessage({
         type: "startMapping",
+      });
+    }
+  }
+
+  public endMapping(success: boolean) {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: "endMapping",
+        success: success,
       });
     }
   }
@@ -233,21 +244,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             margin-top: 0px;
             margin-bottom: 0px;
           }
-          #progressBar {
-            width: 100%;
-            height: 5px;
-            background-color: var(--vscode-input-background);
-            margin-bottom: 10px;
-            border-radius: 2px;
-            overflow: hidden;
-          }
-          #progressBar .progress {
-            height: 100%;
-            background-color: var(--vscode-progressBar-background);
-            width: 0%;
-            transition: width 0.3s ease-in-out;
-            border-radius: 2px;
-          }
           label {
             display: block;
             margin-bottom: 5px;
@@ -272,12 +268,23 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           .buttons-group {
             display: flex;
             align-items: stretch;
-            margin-bottom: 10px;
             gap: 10px;
           }
+          #startMapping {
+            background-color: #dfdfdf;
+            color: #565656;
+            font-weight: bold;
+          }
           #stopMapping {
-            background-color: var(--vscode-errorForeground);
+            background-color: #ea7553;
+            font-weight: bold;
             display: none;
+          }
+          hr {
+            height: 1px;
+            border: 0px;
+            background-color: var(--vscode-foreground);
+            margin-bottom: 17px;
           }
           .switch {
             position: relative;
@@ -341,8 +348,8 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           </label>
         </div>
         <button id="startMapping">Start Mapping</button>
-        <button id="stopMapping">Stop Mapping</button>
-        <div id="progressBar"><div class="progress"></div></div>
+        <hr>
+        <button id="stopMapping" style="display: none;">Stop Mapping</button>
         <div class="buttons-group">
           <button id="mappedFolders">Mapped Folders</button>
           <button id="ignorePresets">Ignore Presets</button>
@@ -419,26 +426,13 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
               case 'updateIgnoreFiles':
                 updateIgnoreFileSelect(message.ignoreFiles);
                 break;
-              case 'updateProgress':
-                const progressBar = document.querySelector('#progressBar .progress');
-                progressBar.style.width = \`\${message.progress}%\`;
-                if (message.progress >= 100) {
-                  setTimeout(() => {
-                    progressBar.style.width = '0%';
-                    document.getElementById('stopMapping').style.display = 'none';
-                    document.getElementById('startMapping').style.display = 'block';
-                  }, 1000);
-                }
-                break;
-              case 'resetProgress':
-                const progressBarReset = document.querySelector('#progressBar .progress');
-                progressBarReset.style.width = '0%';
-                document.getElementById('stopMapping').style.display = 'none';
-                document.getElementById('startMapping').style.display = 'block';
-                break;
               case 'startMapping':
                 document.getElementById('stopMapping').style.display = 'block';
                 document.getElementById('startMapping').style.display = 'none';
+                break;
+              case 'endMapping':
+                document.getElementById('stopMapping').style.display = 'none';
+                document.getElementById('startMapping').style.display = 'block';
                 break;
               case 'updateTokenCost':
                 document.getElementById('tokenCostEstimate').textContent = \`\${message.tokenCost}\`;

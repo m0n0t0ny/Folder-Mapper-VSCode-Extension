@@ -47,13 +47,13 @@
       "folderMapper-viewContainer": [
         {
           "type": "webview",
-          "id": "folderMapper-view",
-          "name": "Folder Mapper"
+          "id": "folderMapper-guide",
+          "name": "Guide"
         },
         {
           "type": "webview",
-          "id": "folderMapper-guide",
-          "name": "Guide"
+          "id": "folderMapper-view",
+          "name": "Folder Mapper"
         }
       ]
     },
