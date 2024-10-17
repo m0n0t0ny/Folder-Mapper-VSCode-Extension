@@ -349,6 +349,24 @@ function endMappingProcess(success: boolean = true) {
   provider.endMapping(success);
 }
 
+// Function to generate a formatted date-time string
+function getFormattedDateTime(): {
+  formattedDate: string;
+  formattedTime: string;
+} {
+  const currentDate = new Date();
+  const formattedDate = `${currentDate.getFullYear()}-${(
+    currentDate.getMonth() + 1
+  )
+    .toString()
+    .padStart(2, "0")}-${currentDate.getDate().toString().padStart(2, "0")}`;
+  const formattedTime = `${currentDate
+    .getHours()
+    .toString()
+    .padStart(2, "0")}-${currentDate.getMinutes().toString().padStart(2, "0")}`;
+  return { formattedDate, formattedTime };
+}
+
 async function saveMapFile(
   outputFolder: string,
   mappedDirectoryName: string,
@@ -357,7 +375,8 @@ async function saveMapFile(
   const sanitizedDirName = mappedDirectoryName
     .replace(/[^a-z0-9]/gi, "_")
     .toLowerCase();
-  const outputFileName = `${sanitizedDirName}_structure.txt`;
+  const { formattedDate, formattedTime } = getFormattedDateTime();
+  const outputFileName = `${sanitizedDirName}_structure_${formattedDate}_${formattedTime}.txt`;
   let outputFilePath = path.join(outputFolder, outputFileName);
 
   if (fs.existsSync(outputFilePath)) {
@@ -371,7 +390,7 @@ async function saveMapFile(
     if (result === "Save with new name") {
       const newFileName = await vscode.window.showInputBox({
         prompt: "Enter a new file name",
-        value: `${sanitizedDirName}_structure_${Date.now()}.txt`,
+        value: outputFileName,
         validateInput: (value) => {
           if (!value) return "File name cannot be empty";
           if (!/^[\w\-. ]+$/.test(value))

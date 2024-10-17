@@ -34,6 +34,10 @@ export class FolderMapperGuideProvider implements vscode.WebviewViewProvider {
                         padding: 20px;
                         line-height: 1.6;
                     }
+                    h1 {
+                        margin-top: 0px !important;
+                        padding-top: 0px !important;
+                    }
                     h1, h2 {
                         color: var(--vscode-editor-foreground);
                     }
