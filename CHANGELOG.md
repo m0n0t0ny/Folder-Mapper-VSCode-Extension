@@ -2,6 +2,20 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.4.0] - 2024-10-18
+
+### Added
+
+- New custom file naming: output files now include the name of the mapped project, follwed by a timestamp in the format "YYYY-MM-DD_HH-MM"
+
+### Changed
+
+- Improved the generateFileHierarchy function for better performance and readability
+
+### Fixed
+
+- Resolved issues with inconsistent file naming between initial save and "Save with new name" option
+
 ## [1.3.0] - 2024-10-17
 
 ### Added

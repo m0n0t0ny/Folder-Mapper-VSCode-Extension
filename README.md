@@ -9,7 +9,7 @@
 
 Folder Mapper is a tool to generate snapshots of a folder structure. It's the perfect tool for providing AI agents with a project overview or sharing your project's architecture with team members.
 
-🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.2.33](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
+🔽 Download the VSCode Extension from the Marketplace: [Folder Mapper v1.4.0](https://marketplace.visualstudio.com/items?itemName=m0n0t0ny.folder-mapper)
 
 ## Features
 
@@ -23,6 +23,7 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 - ⚡ Efficient Performance: Quickly generate maps even for large and complex project structures.
 - 💡 Token Cost Estimation: Get an estimate of the token cost for the generated folder structure (useful for AI interactions).
 - 📘 Integrated Guide: Access a comprehensive guide explaining each feature and its context within the extension.
+- 🕰️ Improved File Naming: Output files now include timestamps for better organization and version control.
 
 ## How to Use
 
@@ -50,12 +51,11 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## New in Version 1.3.0
+## New in Version 1.4.0
 
-- Added a new "Guide" tab with comprehensive explanations of each feature and its context.
-- Introduced token cost estimation for AI-assisted workflows.
-- Improved UI responsiveness and error handling.
-- Enhanced the overall user experience with better feedback and clearer instructions.
+- Improved file naming: Output files now take their name by the mapped folder and include timestamps (YYYY-MM-DD_HH-MM) for better organization.
+- Enhanced performance and readability of the folder hierarchy generation process.
+- Consistent file naming between initial save and "Save with new name" option.
 
 ## License
 
