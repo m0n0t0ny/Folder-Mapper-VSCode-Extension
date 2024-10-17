@@ -176,135 +176,110 @@ async function updateUIAfterIgnoreFileSelection() {
 // Function to generate the folder hierarchy
 async function generateFileHierarchy(
   startPath: string,
-  outputFile: string,
   translations: any,
   lang: string,
   depthLimit: number,
   ig: ReturnType<typeof ignore> | undefined,
-  progressCallback?: (progress: number) => void
-): Promise<void> {
-  try {
-    console.log(`Starting hierarchy generation from: ${startPath}`);
+  progressCallback: (progress: number) => void
+): Promise<string> {
+  let fileContent = "";
+  let totalItems = 0;
+  let processedItems = 0;
 
-    if (!fs.existsSync(startPath)) {
-      throw new Error(`The path ${startPath} does not exist.`);
+  function appendContent(content: string) {
+    fileContent += content;
+  }
+
+  console.log(`Starting hierarchy generation from: ${startPath}`);
+
+  if (!fs.existsSync(startPath)) {
+    throw new Error(`The path ${startPath} does not exist.`);
+  }
+
+  appendContent(`${translations[lang]["folder_map_of"]} ${startPath}\n`);
+  appendContent("=" + "=".repeat(49) + "\n\n");
+
+  // Recursive function to write the folder hierarchy
+  async function writeHierarchy(
+    currentPath: string,
+    prefix: string = "",
+    currentDepth: number = 0
+  ): Promise<void> {
+    if (shouldStopMapping) {
+      throw new Error("Mapping stopped by user");
     }
 
-    // If outputFile is not an absolute path, make it relative to the Folder Mapper directory
-    if (!path.isAbsolute(outputFile)) {
-      outputFile = path.join(getDefaultFolderMapperDir(), outputFile);
+    if (depthLimit !== 0 && currentDepth >= depthLimit) {
+      return;
     }
 
-    const output = fs.createWriteStream(outputFile, { encoding: "utf-8" });
-    output.write(`${translations[lang]["folder_map_of"]} ${startPath}\n`);
-    output.write("=" + "=".repeat(49) + "\n\n");
+    let items: string[];
+    try {
+      items = await fs.promises.readdir(currentPath);
+    } catch (err) {
+      throw new Error(
+        `Failed to read directory: ${currentPath}. ${(err as Error).message}`
+      );
+    }
 
-    let totalItems = 0;
-    let processedItems = 0;
+    // Sort items: directories first, then files
+    items.sort((a, b) => {
+      const aPath = path.join(currentPath, a);
+      const bPath = path.join(currentPath, b);
+      const aIsDir = fs.statSync(aPath).isDirectory();
+      const bIsDir = fs.statSync(bPath).isDirectory();
+      if (aIsDir && !bIsDir) return -1;
+      if (!aIsDir && bIsDir) return 1;
+      return a.localeCompare(b);
+    });
 
-    // Recursive function to write the folder hierarchy
-    async function writeHierarchy(
-      currentPath: string,
-      prefix: string = "",
-      currentDepth: number = 0
-    ): Promise<void> {
-      if (shouldStopMapping) {
-        throw new Error("Mapping stopped by user");
+    for (const [index, item] of items.entries()) {
+      const fullPath = path.join(currentPath, item);
+      const relativePath = path.relative(startPath, fullPath);
+
+      if (ig && ig.ignores(relativePath)) {
+        continue;
       }
 
-      if (depthLimit !== 0 && currentDepth >= depthLimit) {
-        return;
-      }
+      let isDirectory: boolean;
 
-      let items: string[];
       try {
-        items = await fs.promises.readdir(currentPath);
+        const stats = await fs.promises.stat(fullPath);
+        isDirectory = stats.isDirectory();
       } catch (err) {
         throw new Error(
-          `Failed to read directory: ${currentPath}. ${(err as Error).message}`
+          `Failed to get stats for: ${fullPath}. ${(err as Error).message}`
         );
       }
 
-      // Sort items: directories first, then files
-      items.sort((a, b) => {
-        const aPath = path.join(currentPath, a);
-        const bPath = path.join(currentPath, b);
-        const aIsDir = fs.statSync(aPath).isDirectory();
-        const bIsDir = fs.statSync(bPath).isDirectory();
-        if (aIsDir && !bIsDir) return -1;
-        if (!aIsDir && bIsDir) return 1;
-        return a.localeCompare(b);
-      });
+      const isLast = index === items.length - 1;
+      const linePrefix = isLast ? "└── " : "├── ";
+      const newPrefix = prefix + (isLast ? "    " : "│   ");
 
-      for (const [index, item] of items.entries()) {
-        const fullPath = path.join(currentPath, item);
-        const relativePath = path.relative(startPath, fullPath);
+      // Write the current item to the output
+      appendContent(`${prefix}${linePrefix}${item}${isDirectory ? "/" : ""}\n`);
+      processedItems++;
 
-        if (ig && ig.ignores(relativePath)) {
-          continue;
-        }
+      // Update progress
+      const progress = Math.min((processedItems / totalItems) * 100, 99);
+      progressCallback(progress);
 
-        let isDirectory: boolean;
-
-        try {
-          const stats = await fs.promises.stat(fullPath);
-          isDirectory = stats.isDirectory();
-        } catch (err) {
-          throw new Error(
-            `Failed to get stats for: ${fullPath}. ${(err as Error).message}`
-          );
-        }
-
-        const isLast = index === items.length - 1;
-        const linePrefix = isLast ? "└── " : "├── ";
-        const newPrefix = prefix + (isLast ? "    " : "│   ");
-
-        // Write the current item to the output file
-        output.write(
-          `${prefix}${linePrefix}${item}${isDirectory ? "/" : ""}\n`
-        );
-        processedItems++;
-
-        if (progressCallback) {
-          // Ensure progress never exceeds 99% until completion
-          const progress = Math.min((processedItems / totalItems) * 100, 99);
-          progressCallback(progress);
-        }
-
-        // If it's a directory and we haven't reached the depth limit, continue recursively
-        if (
-          isDirectory &&
-          (depthLimit === 0 || currentDepth < depthLimit - 1)
-        ) {
-          await writeHierarchy(fullPath, newPrefix, currentDepth + 1);
-        }
+      // If it's a directory and we haven't reached the depth limit, continue recursively
+      if (isDirectory && (depthLimit === 0 || currentDepth < depthLimit - 1)) {
+        await writeHierarchy(fullPath, newPrefix, currentDepth + 1);
       }
     }
-
-    // Count total items before starting the hierarchy generation
-    totalItems = await countItems(startPath, depthLimit);
-
-    await writeHierarchy(startPath);
-    output.end();
-
-    // Signal 100% completion after finishing writing
-    if (progressCallback) {
-      progressCallback(100);
-    }
-  } catch (e) {
-    if (e instanceof Error && e.message === "Mapping stopped by user") {
-      throw e;
-    }
-    if (e instanceof Error) {
-      vscode.window.showErrorMessage(`Error generating map: ${e.message}`);
-      console.error(
-        `Detailed Error: ${JSON.stringify(e, Object.getOwnPropertyNames(e))}`
-      );
-    } else {
-      vscode.window.showErrorMessage(`An unknown error occurred: ${String(e)}`);
-    }
-    throw e; // Re-throw the error for the caller to handle
   }
+
+  // Count total items before starting the hierarchy generation
+  totalItems = await countItems(startPath, depthLimit);
+
+  await writeHierarchy(startPath);
+
+  // Signal 100% completion after finishing writing
+  progressCallback(100);
+
+  return fileContent;
 }
 
 // Function to count the total number of items in a folder
@@ -374,6 +349,52 @@ function endMappingProcess(success: boolean = true) {
   provider.endMapping(success);
 }
 
+async function saveMapFile(
+  outputFolder: string,
+  mappedDirectoryName: string,
+  content: string
+): Promise<string> {
+  const sanitizedDirName = mappedDirectoryName
+    .replace(/[^a-z0-9]/gi, "_")
+    .toLowerCase();
+  const outputFileName = `${sanitizedDirName}_structure.txt`;
+  let outputFilePath = path.join(outputFolder, outputFileName);
+
+  if (fs.existsSync(outputFilePath)) {
+    const result = await vscode.window.showWarningMessage(
+      `A file named "${outputFileName}" already exists in the output folder. What would you like to do?`,
+      "Overwrite",
+      "Save with new name",
+      "Cancel"
+    );
+
+    if (result === "Save with new name") {
+      const newFileName = await vscode.window.showInputBox({
+        prompt: "Enter a new file name",
+        value: `${sanitizedDirName}_structure_${Date.now()}.txt`,
+        validateInput: (value) => {
+          if (!value) return "File name cannot be empty";
+          if (!/^[\w\-. ]+$/.test(value))
+            return "Invalid file name. Use only letters, numbers, spaces, hyphens, underscores, and periods.";
+          return null;
+        },
+      });
+
+      if (!newFileName) {
+        throw new Error("File saving cancelled by user");
+      }
+
+      outputFilePath = path.join(outputFolder, newFileName);
+    } else if (result === "Cancel") {
+      throw new Error("File saving cancelled by user");
+    }
+    // If "Overwrite" is selected, we'll use the original outputFilePath
+  }
+
+  await fs.promises.writeFile(outputFilePath, content, { encoding: "utf-8" });
+  return outputFilePath;
+}
+
 // Function to map the folder structure
 async function mapFolder(depth: number = 0) {
   if (!selectedFolder) {
@@ -391,8 +412,7 @@ async function mapFolder(depth: number = 0) {
   }
 
   const folderToMap = selectedFolder.fsPath;
-  const outputFileName = "folder_structure.txt";
-  const outputFilePath = path.join(outputFolder, outputFileName);
+  const mappedDirectoryName = path.basename(folderToMap);
 
   const translations = {
     en: {
@@ -474,9 +494,8 @@ async function mapFolder(depth: number = 0) {
 
         // Generating hierarchy phase
         progress.report({ message: "Generating hierarchy..." });
-        await generateFileHierarchy(
+        const fileContent = await generateFileHierarchy(
           folderToMap,
-          outputFilePath,
           translations,
           "en",
           depth,
@@ -487,6 +506,27 @@ async function mapFolder(depth: number = 0) {
             currentProgress = progressPercent;
           }
         );
+
+        // Save the generated content
+        let outputFilePath: string;
+        try {
+          outputFilePath = await saveMapFile(
+            outputFolder,
+            mappedDirectoryName,
+            fileContent
+          );
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message === "File saving cancelled by user"
+          ) {
+            vscode.window.showInformationMessage(
+              "File saving cancelled by user"
+            );
+            return;
+          }
+          throw error;
+        }
 
         vscode.window.showInformationMessage(
           `Folder structure mapped successfully. Output file: ${outputFilePath}`

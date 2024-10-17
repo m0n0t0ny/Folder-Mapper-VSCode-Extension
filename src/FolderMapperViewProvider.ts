@@ -284,7 +284,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             height: 1px;
             border: 0px;
             background-color: var(--vscode-foreground);
-            margin-bottom: 17px;
+            margin: 12px 0 20px 0;
           }
           .switch {
             position: relative;
@@ -348,7 +348,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           </label>
         </div>
         <button id="startMapping">Start Mapping</button>
-        <hr>
         <button id="stopMapping" style="display: none;">Stop Mapping</button>
         <div class="buttons-group">
           <button id="mappedFolders">Mapped Folders</button>
