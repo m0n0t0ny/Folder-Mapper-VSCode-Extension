@@ -13,18 +13,15 @@ Folder Mapper is a tool to generate snapshots of a folder structure. It's the pe
 
 ## Features
 
-- 📊 Text-Based Mapping: Generate a detailed text-based map of your folder structure.
-- 🔍 Depth Control: Customize the mapping depth to focus on specific levels of your project.
-- 🚫 Smart Exclusions: Utilize ignore files (.gitignore, .vscignore, .foldermapperignore) to exclude specific files or directories from mapping.
-- 🖥️ User-Friendly Interface: Navigate and operate the extension effortlessly through a sleek sidebar interface.
-- ⏳ Real-Time Progress: Track the mapping process with a visual progress bar for instant feedback.
-- 📂 Flexible Output: Choose your preferred location to save the generated folder structure map.
-- 🎨 Theme-Aware Design: Experience a seamless look with UI that automatically adapts to your VS Code theme.
-- ⚡ Efficient Performance: Quickly generate maps even for large and complex project structures.
-- 💡 Token Cost Estimation: Get an estimate of the token cost for the generated folder structure (useful for AI interactions).
-- 📘 Integrated Guide: Access a comprehensive guide explaining each feature and its context within the extension.
-- 🕰️ Improved File Naming: Output files now include timestamps for better organization and version control.
-- 🤖 AI-Optimized Structure: Generate a more compact folder structure optimized for AI language models, reducing token usage.
+- 🆓 Free Forever: No premium features, everything is included for free.
+- 📊 Text-Based Mapping: Generate a detailed map of your folder structure in a .txt format.
+- 🔍 Depth Control: Focus on specific project levels by setting a mapping depth limit.
+- 🚫 Smart Exclusions: Automatically exclude files and directories using custom ignore files.
+- ⚡ Efficient Performance: Fast mapping, even for large projects.
+- 💡 Token Cost Estimation: Estimates the token cost of the output when given to AI as a prompt.
+- 🖥️ User-Friendly Interface: Sleek, sidebar interface for easy navigation.
+- 🎨 Theme-Aware Design: UI adapts to match your VS Code theme.
+- 📘 Integrated Guide: In-depth documentation to help you explore each feature.
 
 ## How to Use
 
