@@ -2,13 +2,13 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
-## [1.5.0] - 2024-10-19
+## [1.8.0] - 2024-10-19
 
 ### Added
 
 - New AI-optimized structure option for more efficient token usage with AI language models
 
-## [1.4.0] - 2024-10-18
+## [1.7.1] - 2024-10-18
 
 ### Added
 
@@ -22,31 +22,28 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 
 - Resolved issues with inconsistent file naming between initial save and "Save with new name" option
 
-## [1.3.0] - 2024-10-17
+## [1.7.0] - 2024-10-17
 
 ### Added
 - Token cost estimation feature for AI-assisted workflows
 - New "Guide" tab with detailed explanations of each feature
-- Index with anchor links in the Guide for easy navigation
 
 ### Changed
 - Improved UI layout and responsiveness
 - Enhanced error handling and debugging capabilities
-- Updated the context of the "Select Folder to Map" function to better explain its purpose in AI workflows
 
 ### Fixed
 - Resolved issues with UI not updating correctly on startup
 - Fixed non-functioning buttons and dropdown menus
-- Improved communication between webview and extension
 
-## [1.2.33] - 2024-10-13
+## [1.5.33] - 2024-10-13
 
 ### Fixed
 
 - Resolved an issue where some commands were not properly registered, causing errors like "command 'folderMapper.getSelectedFolder' not found".
 - Improved the extension's activation process to ensure all necessary commands are available.
 
-## [1.2.22] - 2024-10-07
+## [1.5.22] - 2024-10-07
 
 ### Added
 
@@ -57,13 +54,13 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 
 - Resolved an issue where the ignore file feature was not working due to the wrong configuration of the .vscodeignore file.
 
-## [1.1.21] - 2024-10-03
+## [1.4.21] - 2024-10-03
 
 ### Fixed
 
 - Fixed the GIF path in the README: Users can now view a demo GIF from the Marketplace or through the extension settings.
 
-## [1.1.2] - 2024-10-03
+## [1.4.2] - 2024-10-03
 
 ### Added
 
@@ -73,13 +70,13 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 
 - Improved UI to accommodate new features
 
-## [1.1.1] - 2024-09-26
+## [1.4.1] - 2024-09-26
 
 ### Fixed
 
 - Restored the activity bar icon for Folder Mapper
 
-## [1.1.0] - 2024-09-26
+## [1.4.0] - 2024-09-26
 
 ### Added
 
@@ -94,13 +91,13 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 - Fixed issues with progress bar getting stuck or not updating properly
 - Improved error handling and messaging
 
-## [1.0.3] - 2024-09-20
+## [1.3.3] - 2024-09-20
 
 ### Changed
 
 - Preview image of a .txt file showing the structure of a mapped folder.
 
-## [1.0.2] - 2024-09-20
+## [1.3.2] - 2024-09-20
 
 ### Fixed
 
@@ -111,7 +108,7 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 
 - Improved error handling for inaccessible directories
 
-## [1.0.1] - 2024-08-15
+## [1.3.1] - 2024-08-15
 
 ### Added
 
@@ -123,21 +120,21 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 - Adaptable theme support for the extension UI.
 - Optimized the mapping algorithm for faster processing of large directories.
 
-## [1.0.2] - 2024-09-23
+## [1.3.0] - 2024-09-23
 
 ### Added
 
 - Progress bar to show mapping status.
+- Automatically open the generated map file after creation.
 
 ### Changed
 
 - Enhanced the folder selection process with a more intuitive UI.
 
-## [1.0.1] - 2024-09-22
+## [1.2.0] - 2024-09-22
 
 ### Added
 
-- Option to automatically open the generated map file after creation.
 - Simple UI in the VS Code activity bar.
 
 ### Changed
