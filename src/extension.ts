@@ -17,7 +17,6 @@ let isMappingInProgress = false;
 let shouldStopMapping = false;
 let selectedIgnoreFile: string | undefined;
 let context: vscode.ExtensionContext;
-let estimateTokenCostEnabled = false;
 let aiOptimized = false;
 
 // Function to update the user interface
@@ -169,8 +168,8 @@ async function updateUIAfterIgnoreFileSelection() {
     outputFolder,
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
-    estimateTokenCostEnabled,
-    ignoreFiles
+    ignoreFiles,
+    aiOptimized
   );
 }
 
@@ -361,16 +360,6 @@ async function countItems(
   return count;
 }
 
-// Function to toggle token cost estimation
-async function toggleEstimateTokenCost(value: boolean) {
-  estimateTokenCostEnabled = value;
-  await context.workspaceState.update("estimateTokenCost", value);
-  console.log(`Estimate Token Cost toggled to: ${value}`);
-
-  // Update the UI immediately after toggling
-  await updateUIAfterStateChange();
-}
-
 // Update UI after a state change function
 async function updateUIAfterStateChange() {
   const ignoreFiles = await getIgnoreFiles();
@@ -379,7 +368,6 @@ async function updateUIAfterStateChange() {
     outputFolder,
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
-    estimateTokenCostEnabled,
     ignoreFiles,
     aiOptimized
   );
@@ -596,11 +584,8 @@ async function mapFolder(depth: number = 0) {
         const doc = await vscode.workspace.openTextDocument(outputFilePath);
         await vscode.window.showTextDocument(doc);
 
-        // Estimate token cost if enabled
-        if (estimateTokenCostEnabled) {
-          const tokenCost = await estimateTokenCost(outputFilePath);
-          provider.updateTokenCost(tokenCost);
-        }
+        const tokenCost = await estimateTokenCost(outputFilePath);
+        provider.updateTokenCost(tokenCost);
       }
     );
 
@@ -631,7 +616,6 @@ async function updateUIAfterMapping() {
     outputFolder,
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
-    estimateTokenCostEnabled,
     ignoreFiles,
     aiOptimized
   );
@@ -775,8 +759,6 @@ function registerCommands() {
       name: "getDepthLimit",
       handler: () => context.workspaceState.get("depthLimit", 0),
     },
-    { name: "toggleEstimateTokenCost", handler: toggleEstimateTokenCost },
-    { name: "getEstimateTokenCost", handler: () => estimateTokenCostEnabled },
   ];
 
   commands.forEach((cmd) => {
@@ -798,10 +780,6 @@ async function initializeState() {
     context.globalState.get<string>("outputFolder") ||
     getDefaultFolderMapperDir();
   selectedIgnoreFile = context.globalState.get<string>("selectedIgnoreFile");
-  estimateTokenCostEnabled = context.workspaceState.get(
-    "estimateTokenCost",
-    false
-  );
   aiOptimized = context.workspaceState.get("aiOptimized", false);
 }
 
@@ -811,7 +789,6 @@ async function updateInitialView() {
     outputFolder,
     selectedIgnoreFile,
     context.workspaceState.get("depthLimit", 0),
-    estimateTokenCostEnabled,
     await getIgnoreFiles(),
     aiOptimized
   );

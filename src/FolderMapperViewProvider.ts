@@ -36,8 +36,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         case "mapFolder":
           await vscode.commands.executeCommand(
             "folderMapper.mapFolder",
-            data.depth,
-            data.estimateTokenCost
+            data.depth
           );
           break;
         case "stopMapping":
@@ -53,12 +52,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           await vscode.commands.executeCommand(
             "folderMapper.selectIgnoreFile",
             data.file
-          );
-          break;
-        case "toggleEstimateTokenCost":
-          await vscode.commands.executeCommand(
-            "folderMapper.toggleEstimateTokenCost",
-            data.value
           );
           break;
         case "toggleAiOptimized":
@@ -92,9 +85,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     const depthLimit = await vscode.commands.executeCommand<number>(
       "folderMapper.getDepthLimit"
     );
-    const estimateTokenCost = await vscode.commands.executeCommand<boolean>(
-      "folderMapper.getEstimateTokenCost"
-    );
     const aiOptimized = await vscode.commands.executeCommand<boolean>(
       "folderMapper.getAiOptimized"
     );
@@ -105,7 +95,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
       outputFolder,
       selectedIgnoreFile,
       depthLimit,
-      estimateTokenCost,
       ignoreFiles,
       aiOptimized
     );
@@ -116,7 +105,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     outputFolder?: string,
     selectedIgnoreFile?: string,
     depthLimit?: number,
-    estimateTokenCost?: boolean,
     ignoreFiles?: string[],
     aiOptimized?: boolean
   ) {
@@ -126,7 +114,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
         outputFolder,
         selectedIgnoreFile,
         depthLimit,
-        estimateTokenCost,
         ignoreFiles,
         aiOptimized,
       });
@@ -140,7 +127,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           ? path.basename(selectedIgnoreFile)
           : "",
         depthLimit: depthLimit !== undefined ? depthLimit : 0,
-        estimateTokenCost: estimateTokenCost || false,
         aiOptimized: aiOptimized,
       });
     }
@@ -226,9 +212,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             font-size: var(--vscode-font-size);
             font-weight: var(--vscode-font-weight);
           }
-          #startMapping {
-          
-          }
           #ignoreFileSelect {
             padding: 6px 0px;
           }
@@ -251,6 +234,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             color: var(--vscode-input-foreground);
             border: 1px solid var(--vscode-input-border);
             border-radius: 2px;
+            word-break: break-all;
           }
           #depthLimit, #tokenCostEstimate {
             width: 100%;
@@ -293,12 +277,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             font-weight: bold;
             display: none;
           }
-          hr {
-            height: 1px;
-            border: 0px;
-            background-color: var(--vscode-foreground);
-            margin: 12px 0 20px 0;
-          }
           .switch {
             position: relative;
             display: inline-block;
@@ -339,13 +317,17 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           input:checked + .slider:before {
             transform: translateX(18px);
           }
+          #tokenCostEstimate {
+            width: 100%;
+            padding-right: 10px;
+          }
         </style>
       </head>
       <body>
         <button id="selectFolder">Select Folder to Map</button>
-        <div id="selectedFolder"></div>
+        <div id="selectedFolder">Not selected</div>
         <button id="selectOutputFolder">Select Output Folder</button>
-        <div id="outputFolder"></div>
+        <div id="outputFolder">Not selected</div>
         <div class="input-group">
           <label for="depthLimit">Depth Limit (0 for unlimited):</label>
           <input type="number" id="depthLimit" value="0" min="0">
@@ -354,13 +336,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <option value="">Select an ignore file</option>
         </select>
         <div class="input-group">
-          <label for="estimateTokenCost">Estimate Token Cost:</label>
-          <label class="switch">
-            <input type="checkbox" id="estimateTokenCost">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="input-group">
           <label for="aiOptimized">AI-Optimized Mapping:</label>
           <label class="switch">
             <input type="checkbox" id="aiOptimized">
@@ -368,14 +343,14 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           </label>
         </div>
         <button id="startMapping">Start Mapping</button>
-        <button id="stopMapping" style="display: none;">Stop Mapping</button>
+        <button id="stopMapping">Stop Mapping</button>
         <div class="buttons-group">
           <button id="mappedFolders">Mapped Folders</button>
           <button id="ignorePresets">Ignore Presets</button>
         </div>
         <div class="input-group">
-          <label for="tokenCostEstimate">Estimated Token Cost:</label>
-          <div id="tokenCostEstimate"></div>
+          <label>Estimated Token Cost:</label>
+          <div id="tokenCostEstimate">0</div>
         </div>
 
         <script>
@@ -389,8 +364,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           document.getElementById('selectOutputFolder').addEventListener('click', () => sendMessage('selectOutputFolder'));
           document.getElementById('startMapping').addEventListener('click', () => {
             const depth = parseInt(document.getElementById('depthLimit').value);
-            const estimateTokenCost = document.getElementById('estimateTokenCost').checked;
-            sendMessage('mapFolder', { depth, estimateTokenCost });
+            sendMessage('mapFolder', { depth });
           });
           document.getElementById('aiOptimized').addEventListener('change', (event) => {
             console.log("AI-Optimized Structure toggled:", event.target.checked);
@@ -410,39 +384,55 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
               file: selectedFile 
             });
           });
-          document.getElementById('estimateTokenCost').addEventListener('change', (event) => {
-            console.log("Estimate Token Cost toggled:", event.target.checked);
-            vscode.postMessage({ 
-              type: 'toggleEstimateTokenCost', 
-              value: event.target.checked 
-            });
-          });
 
           function updateUI(message) {
             console.log("Updating UI with:", message);
-            document.getElementById('selectedFolder').textContent = message.selectedFolder;
-            document.getElementById('outputFolder').textContent = message.outputFolder;
-            document.getElementById('depthLimit').value = message.depthLimit;
-            document.getElementById('estimateTokenCost').checked = message.estimateTokenCost;
-            if (message.aiOptimized !== undefined) {
-              document.getElementById('aiOptimized').checked = message.aiOptimized;
+            const selectedFolderElement = document.getElementById('selectedFolder');
+            const outputFolderElement = document.getElementById('outputFolder');
+            const tokenCostElement = document.getElementById('tokenCostEstimate');
+            const depthLimitElement = document.getElementById('depthLimit');
+            const aiOptimizedElement = document.getElementById('aiOptimized');
+
+            if (selectedFolderElement) {
+              selectedFolderElement.textContent = message.selectedFolder;
             }
+            
+            if (outputFolderElement) {
+              outputFolderElement.textContent = message.outputFolder;
+            }
+
+            if (depthLimitElement && message.depthLimit !== undefined) {
+              depthLimitElement.value = message.depthLimit;
+            }
+
+            if (aiOptimizedElement && message.aiOptimized !== undefined) {
+              aiOptimizedElement.checked = message.aiOptimized;
+            }
+
+            if (tokenCostElement && message.tokenCost !== undefined) {
+              tokenCostElement.textContent = message.tokenCost;
+            }
+
             updateIgnoreFileSelect(message.ignoreFiles, message.selectedIgnoreFile);
           }
 
           function updateIgnoreFileSelect(ignoreFiles, selectedIgnoreFile) {
             console.log("Updating ignore file select with:", ignoreFiles, selectedIgnoreFile);
             const ignoreFileSelect = document.getElementById('ignoreFileSelect');
+            if (!ignoreFileSelect) return;
+            
             ignoreFileSelect.innerHTML = '<option value="">Select an ignore file</option>';
-            ignoreFiles.forEach(file => {
-              const option = document.createElement('option');
-              option.value = file;
-              option.textContent = file;
-              if (file === selectedIgnoreFile) {
-                option.selected = true;
-              }
-              ignoreFileSelect.appendChild(option);
-            });
+            if (Array.isArray(ignoreFiles)) {
+              ignoreFiles.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                if (file === selectedIgnoreFile) {
+                  option.selected = true;
+                }
+                ignoreFileSelect.appendChild(option);
+              });
+            }
           }
 
           window.addEventListener('message', event => {
@@ -464,7 +454,14 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 document.getElementById('startMapping').style.display = 'block';
                 break;
               case 'updateTokenCost':
-                document.getElementById('tokenCostEstimate').textContent = \`\${message.tokenCost}\`;
+                const tokenCostElement = document.getElementById('tokenCostEstimate');
+                if (tokenCostElement) {
+                  tokenCostElement.textContent = message.tokenCost;
+                }
+                break;
+              case 'updateProgress':
+                break;
+              case 'resetProgress':
                 break;
             }
           });
