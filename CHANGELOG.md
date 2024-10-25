@@ -2,6 +2,12 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.8.1] - 2024-10-25
+
+### Changed
+
+- Token cost estimation feature is now enabled by default
+
 ## [1.8.0] - 2024-10-19
 
 ### Added
@@ -25,7 +31,7 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 ## [1.7.0] - 2024-10-17
 
 ### Added
-- Token cost estimation feature for AI-assisted workflows
+- Token cost estimation feature
 - New "Guide" tab with detailed explanations of each feature
 
 ### Changed
