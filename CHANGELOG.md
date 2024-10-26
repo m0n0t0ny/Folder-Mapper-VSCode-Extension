@@ -2,6 +2,13 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.9.0] - 2024-10-26
+
+### Added
+
+- Token cost comparison feature: now shows the difference between current and previous mapping token costs
+- Visual indicators for token cost changes (green for decreases, red for increases)
+
 ## [1.8.1] - 2024-10-25
 
 ### Changed

@@ -259,6 +259,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             margin-bottom: 5px;
           }
           .input-group {
+            width: 100%;
             display: flex;
             align-items: center;
             margin-bottom: 10px;
@@ -309,9 +310,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: var(--vscode-input-background);
+            background-color: var(--vscode-button-background);
             transition: .4s;
-            border-radius: 9999px;
+            border-radius: 2px;
           }
           .slider:before {
             position: absolute;
@@ -322,7 +323,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             bottom: 2px;
             background-color: #dfdfdf;
             transition: .4s;
-            border-radius: 9999px;
+            border-radius: 2px;
           }
           input:checked + .slider {
             background-color: #ea7553;
@@ -362,9 +363,10 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <button id="ignorePresets">Ignore Presets</button>
         </div>
         <div class="input-group">
-        <label for="tokenCostEstimate">Estimated Token Cost:</label>
-        <div id="tokenCostEstimate"></div>
-        <div id="tokenDifference" style="margin-left: 10px;"></div>
+        <div class="input-group">
+          <label for="tokenCostEstimate">Estimated Token Cost:</label>
+          <div id="tokenCostEstimate">0</div>
+        </div>
       </div>
 
         <script>
@@ -468,17 +470,22 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 document.getElementById('startMapping').style.display = 'block';
                 break;
               case 'updateTokenCost':
-              document.getElementById('tokenCostEstimate').textContent = message.tokenCost;
-              if (message.tokenDifference !== undefined) {
-                const diff = message.tokenDifference;
-                const sign = diff >= 0 ? '+' : '';
-                const color = diff >= 0 ? 'var(--vscode-charts-red)' : 'var(--vscode-charts-green)';
-                document.getElementById('tokenDifference').textContent = \`\${sign}\${diff}\`;
-                document.getElementById('tokenDifference').style.color = color;
-              } else {
-                document.getElementById('tokenDifference').textContent = '';
-              }
-              break;
+                const tokenCostEl = document.getElementById('tokenCostEstimate');
+                let costText = \`\${message.tokenCost}\`;
+                
+                if (message.tokenDifference !== undefined) {
+                  const diff = message.tokenDifference;
+                  const sign = diff >= 0 ? '+' : '';
+                  const diffSpan = document.createElement('span');
+                  diffSpan.textContent = \` (\${sign}\${diff})\`;
+                  diffSpan.style.color = diff >= 0 ? 'var(--vscode-charts-red)' : 'var(--vscode-charts-green)';
+                  
+                  tokenCostEl.textContent = costText;
+                  tokenCostEl.appendChild(diffSpan);
+                } else {
+                  tokenCostEl.textContent = costText;
+                }
+                break;
               case 'updateProgress':
                 break;
               case 'resetProgress':

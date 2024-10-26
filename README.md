@@ -49,9 +49,10 @@ Folder Mapper works out of the box with no additional configuration required!
 
 There are no known issues at this time. If you encounter any problems, please report them on our [GitHub issues page](https://github.com/m0n0t0ny/folder-mapper/issues).
 
-## New in Version 1.8
+## New in Version 1.9
 
-- Added AI-optimized structure option for more efficient token usage with AI language models
+- Token cost comparison feature: now shows the difference between current and previous mapping token costs
+- Visual indicators for token cost changes (green for decreases, red for increases)
 
 ## License
 

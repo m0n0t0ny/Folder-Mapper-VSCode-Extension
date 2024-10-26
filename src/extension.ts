@@ -17,7 +17,9 @@ let isMappingInProgress = false;
 let shouldStopMapping = false;
 let selectedIgnoreFile: string | undefined;
 let context: vscode.ExtensionContext;
+let estimateTokenCostEnabled = false;
 let aiOptimized = false;
+let lastTokenCost: number | undefined;
 
 // Function to update the user interface
 function updateUI() {
@@ -513,7 +515,6 @@ async function mapFolder(depth: number = 0) {
 
         let currentProgress = 0;
 
-        // Check if mapping should be stopped before starting
         if (shouldStopMapping) {
           throw new Error("Mapping stopped by user");
         }
@@ -537,7 +538,6 @@ async function mapFolder(depth: number = 0) {
           );
         }
 
-        // Check if mapping should be stopped after counting
         if (shouldStopMapping) {
           throw new Error("Mapping stopped by user");
         }
@@ -584,26 +584,37 @@ async function mapFolder(depth: number = 0) {
         const doc = await vscode.workspace.openTextDocument(outputFilePath);
         await vscode.window.showTextDocument(doc);
 
-        const tokenCost = await estimateTokenCost(outputFilePath);
-        provider.updateTokenCost(tokenCost);
+        // Update token cost estimation if enabled
+        if (estimateTokenCostEnabled) {
+          const currentTokenCost = await estimateTokenCost(outputFilePath);
+          const tokenDifference =
+            lastTokenCost !== undefined
+              ? currentTokenCost - lastTokenCost
+              : undefined;
+
+          lastTokenCost = currentTokenCost;
+          provider.updateTokenCostWithComparison(
+            currentTokenCost,
+            tokenDifference
+          );
+        }
       }
     );
 
-    endMappingProcess(true); // Successful completion
+    endMappingProcess(true);
   } catch (error) {
     if (error instanceof Error && error.message === "Mapping stopped by user") {
       vscode.window.showInformationMessage("Mapping stopped by user");
-      endMappingProcess(false); // Stopped by user
+      endMappingProcess(false);
     } else {
       vscode.window.showErrorMessage(
         `Error mapping folder: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
-      endMappingProcess(false); // Stopped due to error
+      endMappingProcess(false);
     }
   } finally {
-    // Ensure UI is updated even if an error occurred
     await updateUIAfterMapping();
   }
 }
@@ -780,7 +791,12 @@ async function initializeState() {
     context.globalState.get<string>("outputFolder") ||
     getDefaultFolderMapperDir();
   selectedIgnoreFile = context.globalState.get<string>("selectedIgnoreFile");
+  estimateTokenCostEnabled = context.workspaceState.get(
+    "estimateTokenCost",
+    false
+  );
   aiOptimized = context.workspaceState.get("aiOptimized", false);
+  lastTokenCost = context.workspaceState.get("lastTokenCost", undefined);
 }
 
 async function updateInitialView() {
@@ -795,4 +811,8 @@ async function updateInitialView() {
 }
 
 // Extension deactivation function
-export function deactivate() {}
+export function deactivate() {
+  if (context) {
+    context.workspaceState.update("lastTokenCost", lastTokenCost);
+  }
+}
