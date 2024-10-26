@@ -184,6 +184,19 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  public updateTokenCostWithComparison(
+    currentCost: number,
+    difference: number | undefined
+  ) {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: "updateTokenCost",
+        tokenCost: currentCost,
+        tokenDifference: difference,
+      });
+    }
+  }
+
   private _getHtmlForWebview(webview: vscode.Webview) {
     return `
       <!DOCTYPE html>
@@ -307,12 +320,12 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             width: 18px;
             left: 2px;
             bottom: 2px;
-            background-color: var(--vscode-input-foreground);
+            background-color: #dfdfdf;
             transition: .4s;
             border-radius: 9999px;
           }
           input:checked + .slider {
-            background-color: var(--vscode-button-background);
+            background-color: #ea7553;
           }
           input:checked + .slider:before {
             transform: translateX(18px);
@@ -336,7 +349,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <option value="">Select an ignore file</option>
         </select>
         <div class="input-group">
-          <label for="aiOptimized">AI-Optimized Mapping:</label>
+          <label for="aiOptimized">AI-Optimized Format:</label>
           <label class="switch">
             <input type="checkbox" id="aiOptimized">
             <span class="slider"></span>
@@ -349,9 +362,10 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <button id="ignorePresets">Ignore Presets</button>
         </div>
         <div class="input-group">
-          <label>Estimated Token Cost:</label>
-          <div id="tokenCostEstimate">0</div>
-        </div>
+        <label for="tokenCostEstimate">Estimated Token Cost:</label>
+        <div id="tokenCostEstimate"></div>
+        <div id="tokenDifference" style="margin-left: 10px;"></div>
+      </div>
 
         <script>
           const vscode = acquireVsCodeApi();
@@ -454,11 +468,17 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 document.getElementById('startMapping').style.display = 'block';
                 break;
               case 'updateTokenCost':
-                const tokenCostElement = document.getElementById('tokenCostEstimate');
-                if (tokenCostElement) {
-                  tokenCostElement.textContent = message.tokenCost;
-                }
-                break;
+              document.getElementById('tokenCostEstimate').textContent = message.tokenCost;
+              if (message.tokenDifference !== undefined) {
+                const diff = message.tokenDifference;
+                const sign = diff >= 0 ? '+' : '';
+                const color = diff >= 0 ? 'var(--vscode-charts-red)' : 'var(--vscode-charts-green)';
+                document.getElementById('tokenDifference').textContent = \`\${sign}\${diff}\`;
+                document.getElementById('tokenDifference').style.color = color;
+              } else {
+                document.getElementById('tokenDifference').textContent = '';
+              }
+              break;
               case 'updateProgress':
                 break;
               case 'resetProgress':
