@@ -281,14 +281,9 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             align-items: stretch;
             gap: 10px;
           }
-          #startMapping {
-            background-color: #dfdfdf;
-            color: #565656;
-            font-weight: bold;
-          }
           #stopMapping {
             background-color: #ea7553;
-            font-weight: bold;
+            // font-weight: bold;
             display: none;
           }
           .switch {
@@ -311,7 +306,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             right: 0;
             bottom: 0;
             background-color: var(--vscode-button-background);
-            transition: .4s;
+            transition: .3s;
             border-radius: 2px;
           }
           .slider:before {
@@ -322,7 +317,7 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
             left: 2px;
             bottom: 2px;
             background-color: #dfdfdf;
-            transition: .4s;
+            transition: .3s;
             border-radius: 2px;
           }
           input:checked + .slider {
