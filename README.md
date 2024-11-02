@@ -1,6 +1,6 @@
-![](https://i.imgur.com/mbzKCXS.png)
-
 # Folder Mapper
+
+![](https://i.imgur.com/mbzKCXS.png)
 
 <p>
     <img src="https://i.imgur.com/vd2MP95.png" alt=".txt outcome of a mapped folder">
