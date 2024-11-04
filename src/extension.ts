@@ -17,7 +17,6 @@ let isMappingInProgress = false;
 let shouldStopMapping = false;
 let selectedIgnoreFile: string | undefined;
 let context: vscode.ExtensionContext;
-let estimateTokenCostEnabled = false;
 let aiOptimized = false;
 let lastTokenCost: number | undefined;
 
@@ -565,6 +564,24 @@ async function mapFolder(depth: number = 0) {
             mappedDirectoryName,
             fileContent
           );
+
+          const currentTokenCost = await estimateTokenCost(outputFilePath);
+          const tokenDifference =
+            lastTokenCost !== undefined
+              ? currentTokenCost - lastTokenCost
+              : undefined;
+
+          lastTokenCost = currentTokenCost;
+          provider.updateTokenCostWithComparison(
+            currentTokenCost,
+            tokenDifference
+          );
+
+          vscode.window.showInformationMessage(
+            `Folder structure mapped successfully. Output file: ${outputFilePath}`
+          );
+          const doc = await vscode.workspace.openTextDocument(outputFilePath);
+          await vscode.window.showTextDocument(doc);
         } catch (error) {
           if (
             error instanceof Error &&
@@ -583,21 +600,6 @@ async function mapFolder(depth: number = 0) {
         );
         const doc = await vscode.workspace.openTextDocument(outputFilePath);
         await vscode.window.showTextDocument(doc);
-
-        // Update token cost estimation if enabled
-        if (estimateTokenCostEnabled) {
-          const currentTokenCost = await estimateTokenCost(outputFilePath);
-          const tokenDifference =
-            lastTokenCost !== undefined
-              ? currentTokenCost - lastTokenCost
-              : undefined;
-
-          lastTokenCost = currentTokenCost;
-          provider.updateTokenCostWithComparison(
-            currentTokenCost,
-            tokenDifference
-          );
-        }
       }
     );
 
@@ -791,12 +793,8 @@ async function initializeState() {
     context.globalState.get<string>("outputFolder") ||
     getDefaultFolderMapperDir();
   selectedIgnoreFile = context.globalState.get<string>("selectedIgnoreFile");
-  estimateTokenCostEnabled = context.workspaceState.get(
-    "estimateTokenCost",
-    false
-  );
   aiOptimized = context.workspaceState.get("aiOptimized", false);
-  lastTokenCost = context.workspaceState.get("lastTokenCost", undefined);
+  lastTokenCost = context.globalState.get("lastTokenCost", undefined);
 }
 
 async function updateInitialView() {
@@ -813,6 +811,6 @@ async function updateInitialView() {
 // Extension deactivation function
 export function deactivate() {
   if (context) {
-    context.workspaceState.update("lastTokenCost", lastTokenCost);
+    context.globalState.update("lastTokenCost", lastTokenCost);
   }
 }
