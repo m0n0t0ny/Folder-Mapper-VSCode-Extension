@@ -64,36 +64,36 @@ logs/**
 # Uncomment (remove the '#') the lines below to activate these common exclusions
 
 # Version control system directories
-#.git/
-#.svn/
-#.hg/
+.git/
+.svn/
+.hg/
 
 # Build output directories
-#build/
-#dist/
-#out/
+build/
+dist/
+out/
 
 # Dependency directories
-#node_modules/
-#vendor/
+node_modules/
+vendor/
 
 # Log files
-#*.log
+*.log
 
 # Temporary files
-#*.tmp
-#*.temp
-#*.swp
+*.tmp
+*.temp
+*.swp
 
 # OS generated files
-#.DS_Store
-#Thumbs.db
+.DS_Store
+Thumbs.db
 
 # IDE/Editor specific files and directories
-#.vscode/
-#.idea/
-#*.sublime-project
-#*.sublime-workspace
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
 # Remember: The more specific your rules, the better control you have over what gets excluded.
 # You can always check the generated map to ensure the exclusions are working as expected.
