@@ -465,22 +465,26 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
                 document.getElementById('startMapping').style.display = 'block';
                 break;
               case 'updateTokenCost':
-                const tokenCostEl = document.getElementById('tokenCostEstimate');
-                let costText = \`\${message.tokenCost}\`;
+              const tokenCostEl = document.getElementById('tokenCostEstimate');
+              let costText = \`\${message.tokenCost}\`;
+              
+              if (message.tokenDifference !== undefined) {
+                const diff = message.tokenDifference;
+                const sign = diff >= 0 ? '+' : '';
+                const diffSpan = document.createElement('span');
+                diffSpan.textContent = \` (\${sign}\${diff})\`;
                 
-                if (message.tokenDifference !== undefined) {
-                  const diff = message.tokenDifference;
-                  const sign = diff >= 0 ? '+' : '';
-                  const diffSpan = document.createElement('span');
-                  diffSpan.textContent = \` (\${sign}\${diff})\`;
-                  diffSpan.style.color = diff >= 0 ? 'var(--vscode-charts-red)' : 'var(--vscode-charts-green)';
-                  
-                  tokenCostEl.textContent = costText;
-                  tokenCostEl.appendChild(diffSpan);
-                } else {
-                  tokenCostEl.textContent = costText;
+                // Only apply color if the difference is not zero
+                if (diff !== 0) {
+                  diffSpan.style.color = diff > 0 ? 'var(--vscode-charts-red)' : 'var(--vscode-charts-green)';
                 }
-                break;
+                
+                tokenCostEl.textContent = costText;
+                tokenCostEl.appendChild(diffSpan);
+              } else {
+                tokenCostEl.textContent = costText;
+              }
+              break;
               case 'updateProgress':
                 break;
               case 'resetProgress':
