@@ -2,6 +2,15 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.9.3] - 2024-11-05
+
+### Fixed
+
+- Fixed token cost estimation not being calculated
+- Fixed bug causing ignore files not showing in dropdown window
+- Fixed token cost difference counter not properly handling zero value
+- Fixed ignore files not being immediately visible in the dropdown
+
 ## [1.9.0] - 2024-10-26
 
 ### Added
