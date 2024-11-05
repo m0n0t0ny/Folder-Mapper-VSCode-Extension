@@ -22,9 +22,13 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
+    // Gestione messaggi dalla webview
     webviewView.webview.onDidReceiveMessage(async (data) => {
       console.log("Received message from webview:", data);
       switch (data.type) {
+        case "webviewReady":
+          await this.restoreState();
+          break;
         case "selectFolder":
           await vscode.commands.executeCommand("folderMapper.selectFolder");
           break;
@@ -63,41 +67,58 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    this.restoreState();
-
-    webviewView.onDidChangeVisibility(() => {
+    webviewView.onDidChangeVisibility(async () => {
       if (webviewView.visible) {
-        this.restoreState();
+        await this.restoreState();
       }
     });
   }
 
   private async restoreState() {
-    const selectedFolder = await vscode.commands.executeCommand<
-      string | undefined
-    >("folderMapper.getSelectedFolder");
-    const outputFolder = await vscode.commands.executeCommand<
-      string | undefined
-    >("folderMapper.getOutputFolder");
-    const selectedIgnoreFile = await vscode.commands.executeCommand<
-      string | undefined
-    >("folderMapper.getSelectedIgnoreFile");
-    const depthLimit = await vscode.commands.executeCommand<number>(
-      "folderMapper.getDepthLimit"
-    );
-    const aiOptimized = await vscode.commands.executeCommand<boolean>(
-      "folderMapper.getAiOptimized"
-    );
-    const ignoreFiles = await getIgnoreFiles();
+    try {
+      console.log("Restoring state...");
 
-    await this.updateView(
-      selectedFolder,
-      outputFolder,
-      selectedIgnoreFile,
-      depthLimit,
-      ignoreFiles,
-      aiOptimized
-    );
+      const [
+        selectedFolder,
+        outputFolder,
+        selectedIgnoreFile,
+        depthLimit,
+        aiOptimized,
+        ignoreFiles,
+      ] = await Promise.all([
+        vscode.commands.executeCommand<string | undefined>(
+          "folderMapper.getSelectedFolder"
+        ),
+        vscode.commands.executeCommand<string | undefined>(
+          "folderMapper.getOutputFolder"
+        ),
+        vscode.commands.executeCommand<string | undefined>(
+          "folderMapper.getSelectedIgnoreFile"
+        ),
+        vscode.commands.executeCommand<number>("folderMapper.getDepthLimit"),
+        vscode.commands.executeCommand<boolean>("folderMapper.getAiOptimized"),
+        getIgnoreFiles(),
+      ]);
+
+      console.log(
+        "State restored, updating view with ignore files:",
+        ignoreFiles
+      );
+
+      await this.updateView(
+        selectedFolder,
+        outputFolder,
+        selectedIgnoreFile,
+        depthLimit,
+        ignoreFiles,
+        aiOptimized
+      );
+    } catch (error) {
+      console.error("Error restoring state:", error);
+      vscode.window.showErrorMessage(
+        `Error restoring Folder Mapper state: ${error}`
+      );
+    }
   }
 
   public async updateView(
