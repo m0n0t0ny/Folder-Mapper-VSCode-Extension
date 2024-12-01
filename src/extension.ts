@@ -5,8 +5,12 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { FolderMapperGuideProvider } from "./FolderMapperGuideProvider";
 import { FolderMapperViewProvider } from "./FolderMapperViewProvider";
-import { defaultIgnoreContent } from "./defaultIgnoreContent";
 import { estimateTokenCost } from "./estimateTokenCost";
+import {
+  angularIgnoreContent,
+  defaultIgnoreContent,
+  springBootIgnoreContent,
+} from "./ignoreTemplates";
 
 // Global variables to manage extension state
 let selectedFolder: vscode.Uri | undefined;
@@ -662,7 +666,18 @@ function updateStatusBar() {
 async function initializeFolderMapperConfig() {
   const folderMapperDir = getDefaultFolderMapperDir();
   const ignorePresetsDir = getIgnorePresetsDir();
-  const ignoreFilePath = getDefaultIgnoreFilePath();
+  const defaultIgnoreFilePath = path.join(
+    ignorePresetsDir,
+    ".foldermapperignore"
+  );
+  const springBootIgnoreFilePath = path.join(
+    ignorePresetsDir,
+    "java-spring-boot.foldermapperignore"
+  );
+  const angularIgnoreFilePath = path.join(
+    ignorePresetsDir,
+    "angular.foldermapperignore"
+  );
 
   try {
     // Create a Folder Mapper directory if it doesn't exist
@@ -673,13 +688,42 @@ async function initializeFolderMapperConfig() {
     await fs.promises.mkdir(ignorePresetsDir, { recursive: true });
     console.log(`Created Ignore Presets directory at: ${ignorePresetsDir}`);
 
-    // Create a .foldermapperignore file if it doesn't exist
-    if (!fs.existsSync(ignoreFilePath)) {
-      await fs.promises.writeFile(ignoreFilePath, defaultIgnoreContent);
-      console.log(`Created .foldermapperignore file at: ${ignoreFilePath}`);
+    // Create default .foldermapperignore file if it doesn't exist
+    if (!fs.existsSync(defaultIgnoreFilePath)) {
+      await fs.promises.writeFile(defaultIgnoreFilePath, defaultIgnoreContent);
+      console.log(
+        `Created .foldermapperignore file at: ${defaultIgnoreFilePath}`
+      );
     } else {
       console.log(
-        `.foldermapperignore file already exists at: ${ignoreFilePath}`
+        `.foldermapperignore file already exists at: ${defaultIgnoreFilePath}`
+      );
+    }
+
+    // Create Spring Boot ignore file if it doesn't exist
+    if (!fs.existsSync(springBootIgnoreFilePath)) {
+      await fs.promises.writeFile(
+        springBootIgnoreFilePath,
+        springBootIgnoreContent
+      );
+      console.log(
+        `Created java-spring-boot.foldermapperignore file at: ${springBootIgnoreFilePath}`
+      );
+    } else {
+      console.log(
+        `java-spring-boot.foldermapperignore file already exists at: ${springBootIgnoreFilePath}`
+      );
+    }
+
+    // Create Angular ignore file if it doesn't exist
+    if (!fs.existsSync(angularIgnoreFilePath)) {
+      await fs.promises.writeFile(angularIgnoreFilePath, angularIgnoreContent);
+      console.log(
+        `Created angular.foldermapperignore file at: ${angularIgnoreFilePath}`
+      );
+    } else {
+      console.log(
+        `angular.foldermapperignore file already exists at: ${angularIgnoreFilePath}`
       );
     }
 
@@ -808,7 +852,6 @@ async function updateInitialView() {
   );
 }
 
-// Extension deactivation function
 export function deactivate() {
   if (context) {
     context.globalState.update("lastTokenCost", lastTokenCost);

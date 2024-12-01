@@ -4,6 +4,10 @@ All notable changes to the Folder Mapper extension will be documented in this fi
 
 ## [1.9.4] - 2024-10-25
 
+### Added
+
+- New ignore templates
+
 ### Changed
 
 - Small improvements to the UI
