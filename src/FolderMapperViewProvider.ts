@@ -22,7 +22,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-    // Gestione messaggi dalla webview
     webviewView.webview.onDidReceiveMessage(async (data) => {
       console.log("Received message from webview:", data);
       switch (data.type) {
@@ -297,14 +296,29 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           .input-group .switch {
             flex: 0 0 auto;
           }
+          .dropdown-group{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            vertical-align: baseline;
+          }
+          .dropdown-group label {
+            min-width: 120px;
+            margin-bottom: 10px;
+          }
           .buttons-group {
             display: flex;
             align-items: stretch;
             gap: 10px;
           }
+          #startMapping {
+            background-color: #dfdfdf;
+            color: var(--vscode-input-background);
+            font-weight: bold;
+          }
           #stopMapping {
             background-color: #ea7553;
-            // font-weight: bold;
+            font-weight: bold;
             display: none;
           }
           .switch {
@@ -362,9 +376,12 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <label for="depthLimit">Depth Limit (0 for unlimited):</label>
           <input type="number" id="depthLimit" value="0" min="0">
         </div>
-        <select id="ignoreFileSelect">
-          <option value="">Select an ignore file</option>
-        </select>
+        <div class="dropdown-group">
+          <label for="ignoreFileSelect">Select an ignore file</label>
+          <select id="ignoreFileSelect">
+            <option value=""></option>
+          </select>
+        </div>
         <div class="input-group">
           <label for="aiOptimized">AI-Optimized Format:</label>
           <label class="switch">
@@ -378,7 +395,6 @@ export class FolderMapperViewProvider implements vscode.WebviewViewProvider {
           <button id="mappedFolders">Mapped Folders</button>
           <button id="ignorePresets">Ignore Presets</button>
         </div>
-        <div class="input-group">
         <div class="input-group">
           <label for="tokenCostEstimate">Estimated Token Cost:</label>
           <div id="tokenCostEstimate">0</div>
