@@ -79,8 +79,11 @@ logs/**  # All in 'logs'
 # │  COMMON EXCLUSIONS  │
 # ╰─────────────────────╯
 
-#  📁 VERSION CONTROL
+#  🌐 VERSION CONTROL
 .git/
+.gitignore/
+.gitattributes/
+.gitmodules/
 .svn/
 .hg/
 
@@ -197,9 +200,9 @@ mvnw.cmd
 
 #  🌐 GIT
 .git/
-.gitignore
-.gitattributes
-.gitmodules
+.gitignore/
+.gitattributes/
+.gitmodules/
 
 #  🌱 SPRING SPECIFIC
 spring-boot-logger-*.log
@@ -326,6 +329,12 @@ angular.json
 .classpath
 *.launch
 *.sublime-workspace
+
+#  🌐 GIT
+.git/
+.gitignore/
+.gitattributes/
+.gitmodules/
 
 #  🌍 ENVIRONMENT
 .env
