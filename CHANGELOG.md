@@ -2,6 +2,12 @@
 
 All notable changes to the Folder Mapper extension will be documented in this file.
 
+## [1.9.5] - 2024-12-8
+
+### Changed
+
+- Fixed starting ignore templates
+
 ## [1.9.4] - 2024-10-25
 
 ### Added
